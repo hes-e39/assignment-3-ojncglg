@@ -4,12 +4,13 @@ import type { ReactNode } from "react"; // Importing ReactNode type for children
 
 // ------------------- Timer Type Definition -------------------
 
-// Defining the structure of a Timer object
+// Updated Timer type with a description field
 export type Timer = {
   id: string; // A unique identifier for the timer
   type: "stopwatch" | "countdown" | "XY" | "tabata"; // Type of timer
   duration: number; // Total duration of the timer in milliseconds
   status: "not running" | "running" | "paused" | "completed"; // Current status of the timer
+  description: string; // Description for the timer
 };
 
 // ------------------- Timer Context Type -------------------
