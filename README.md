@@ -1,68 +1,57 @@
-# Assignment 3 (A3)
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/Fc9pM79D)
+# Assignment 1
 
-Now that we have our basic workout app working (A2) we are going to build out more features. Our starting point is your A2 code, so copy it into this repo (not the `.github` folder). ***The goal is to have a production ready workout app by the end of A3.*** Some of the features below are harder to implement than others. We recommend staring with the "Persisting state" and then doing the rest in any order.
+## Objective
 
-## Project setup
+For Assignment 1 (A1) we are going to be building four different timer components that we will use in future assignments.
 
-**You may have noticed that the `src` directory is empty. This is because A3 will build on your code from A2. Before you begin, please copy ONLY the `src` folder from your A2 repo into this one and run `npm install` to get your dependencies installed.**
+## What are we building?
 
-NOTE: If you installed any additional dependencies outside of the default set provided by us, then you will have to also install them here with.
+In the fitness world, there are lots of different ways a workout can be timed. For example, we can use a traditional stopwatch, a count-down timer, an interval timer, etc. To support our athletes, we’ll be building 4 different types of timers:
 
-## List of new features 
+| Timer type | Description                                                                                                                                                                                                                                                                               |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stopwatch  | A timer that counts up to X amount of time (e.g. count up to 2 minutes and 30 seconds, starting at 0)                                                                                                                                                                                     |
+| Countdown  | A timer that counts down from X amount of time (e.g. count down to 0, starting at 2 minutes and 30)                                                                                                                                                                                       |
+| XY         | A timer that counts down from X time per round, for Y number of rounds (e.g. 1 minute for 10 minutes would count down from 1 minute to 0, then start another countdown, etc, 10 times )                                                                                                   |
+| TABATA     | An interval timer with work/rest periods. Example: 20s/10s, 8 rounds, would count down from 20 seconds to 0, then count down from 10 seconds to 0, then from 20, then from 10, etc, for 8 rounds. A full round includes both the work and rest. In this case, 20+10=30 seconds per round. |
 
-### Persisting state
-Our workout app has a pretty big problem, when the user refreshes the page we lose all configuration. We want to solve this by persisting state, so that if the page is reloaded or closed accidentally, we can restore the user to the same state. We like to think of it as we have two separate chunks of state we want to store.
+Our larger components are going to be `Stopwatch`, `Countdown`, `XY`, and `Tabata` (all of them are located in `src/components/timers`), but you can imagine that they have common functionality. An example is a start button. All timers are going to have to have a way to start. Our goal is to take these large components and extract common functionality into smaller components. We might have a `Button` component that is shared by all of our timers and it might have a prop that we pass in that changes the background color in order to create a start `Button` and a stop `Button`.
 
-#### Timer Configuration
-We can store this in the URL. This would allow a user to share the URL with a friend to share the workout with them. As the user changes the configuration, we want to update the url. We recommend that you only update the URL after a user "saves" a timer. That is, don't update URL every time they enter an input, but instead have some sort of save button that persists the state both to context and to the URL. 
+## Deliverable
 
-#### Timer State
-Once the user has configured the workout and started the workout, we want to store the running state in local storage. We don't want to be doing a million writes to local storage, so I recommend that you think about how we can accomplish this with fewer writes. It doesn't have to restore to the latest millisecond, but it should be somewhat close (1-2 seconds) to what the workout was at after a reload/refresh of the page.
+1. Get all 4 types of timers to work. The timers should have a pause/resume button, a reset button, and a "fast forward" button (ends the timer). All timers should render at `localhost:3000`.
+2. You should try to DRY up your code by creating generic components that are going to be used by your timers. The most basic ones, but not limited to, are going to be a `Button`, `Input`, `DisplayTime`, `DisplayRounds`, and `Panel` (that handles layout of your timer).
+3. For now you are going to want to store all state in the timers themselves.
+4. Style your components in a way that they are consistent and look presentable. Do not use an existing UI design library (e.g. MUI or Antd), instead try to come up with your own. **You are welcome to search the internet for design inspiration, but make sure to cite all resources you have used.**
+5. Deploy your application to Github pages.
 
-### Edit a timer
-After the workout has been configured and the user is on the main run workout screen, add functionality that allows the user to edit any of the timer configurations (remember to update URL).
+## Grading rubric
 
-### Change the order of a timer in configured workout
-After the workout has been configured and the user is on the main run workout screen, the user can move any timer to a different position in the queue. This can be done a couple of ways. You are welcome to use a drag and drop third party package or come up with something on your own (remember to update URL). The user should also be able to remove a timer from the queue.
+- All 4 timers are working correctly. Timers should have pause/resume button, a reset button, and a button that ends the timer (puts the timer in completed state).
+- UI is consistent and effort has been put into making it look nice. Cite any resources you used.
+- Keep your code as DRY (Don't repeat yourself) as possible
+- The console should be free of JS erros, TS errors, and warnings
 
-### Display total time 
-After the workout has been configured and the user is on the main run workout screen, display the total workout time and count down from total time to zero (when workout is complete) once the workout has been started.
+## Bonus (5pt)
 
-### Add description to each timer
-Add a description field to each time that the user can add when creating the timer and when editing the timer. It should be displayed while the timer is running. This allows the users to describe what needs to be done in that "block" (i.e. 50 push ups).
+- Document all of your generic components. A template for this documentation can be found at `/docs`.
 
-### Wrap app using react-error-boundary
-If for any reason your workout app errors out, then you should handle this and present the user with an error message. `react-error-boundary` package has a nice implementation of react "error boundaries" that you can use to handle this scenario.
+## Install and Run Project
 
-### Workout history (Only Graduate)
-We want to create a new screen that displays a list of previous workouts (create a new route and link to the history page in the navbar). ***Once a workout has been completed, add this workout to the history and save it to local storage***. On the new history screen display all workouts completed and for each workout you should display some summary of all timers run and what the durations/rounds for each timer was.
+Install project
 
-## Deliverables
-- Complete all features listed above
-- As always deploy your app 
+```
+npm i
+```
 
-## Grading Rubric
-We will be grading based on the features listed above and overall code quality
-- Persisting state (20pt)
-- Edit a timer (10pt)
-- Change the order of a timer in configured workout (10pt)
-- Display total time (10pt)
-- Add description to each timer (5pt)
-- Wrap app using react-error-boundary (5pt)
-- Workout history (20pt) (Only Graduate)
-- DRY and overall code quality (20pt)
+Run project
 
-## Dev Setup
+```
+npm run dev
+```
 
-**Prerequisite: you have `node` installed on the command line and can run `node --version`**
-
-1. Open a terminal and navigate to the root of this repository
-2. Run: `npm install`
-3. Install [VSCode](https://code.visualstudio.com/?wt.mc_id=vscom_downloads)
-4. Open VSCode. Install the recommended extensions that pop up in the bottom right. If you don't see this, then you can manually install the following two extensions: [BiomeJS](https://marketplace.visualstudio.com/items?itemName=biomejs.biome) and [TailwindCSS](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss).
-5. You might need to restart VSCode in order for extensions to take in effect. Restart by running `CMD+Shift+P` and search for "Reload Window", hit `Enter`.
-6. Verify that BiomeJS is working by adding some extra indents/spaces in `src/main.tsx`. It should format the file on save.
-7. Start the dev server with `npm run dev` and navigate to http://localhost:5173/
+Timers: `localhost:5173`. Documentation: `localhost:5173/docs`
 
 ## Deploy to GH-Pages
 
@@ -70,7 +59,9 @@ We will be grading based on the features listed above and overall code quality
 
 1. Open `package.json` and update the `"homepage"` key with your repo information. It should change from:
 
-`"homepage": "https://hes-e39.github.io/react-ts-template/"`
+
+//CHANGED FROM assignment-1 to assignment-2//
+`"homepage": "https://hes-e39.github.io/assignment-2/"`
 
 to
 
@@ -81,3 +72,7 @@ If you created this repo in github classrooms, the repo name should have your us
 2. Push changes to GH
 3. Wait until actions finish, this will create a new branch `gh-pages` and run the deployment
 4. In your GH repo: Settings -> Pages -> Build and deployment -> Branch -> gh-pages
+
+You might have to hard refresh the browser page when pushing multiple updates to GH in order to reflect the most recent changes.
+
+This is to update the new SRC folder.
