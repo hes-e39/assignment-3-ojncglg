@@ -74,3 +74,5 @@ If you created this repo in github classrooms, the repo name should have your us
 4. In your GH repo: Settings -> Pages -> Build and deployment -> Branch -> gh-pages
 
 You might have to hard refresh the browser page when pushing multiple updates to GH in order to reflect the most recent changes.
+
+This is to update the new SRC folder.
