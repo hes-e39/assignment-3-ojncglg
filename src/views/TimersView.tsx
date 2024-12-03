@@ -1,108 +1,229 @@
-// Import the TimerContext hook for accessing timer-related state and actions
-import { useTimerContext } from "../TimerContext";
-
-// Import styled-components for defining custom styles directly in JavaScript
-import styled from "styled-components";
+import styled from 'styled-components';
+import { useTimerContext } from '../TimerContext';
+import type { Timer } from '../TimerContext';
 
 // ------------------- Styled Components -------------------
 
-// Container: Styles the layout for the TimersView page
 const Container = styled.div`
-  display: flex; /* Enables flexbox layout */
-  flex-direction: column; /* Stacks elements vertically */
-  align-items: center; /* Centers elements horizontally */
-  padding: 20px; /* Adds padding around the content */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
 `;
 
-// TimerItem: Styles each timer's display
-const TimerItem = styled.div`
-  border: 1px solid #ffd700; /* Yellow border for timers */
-  padding: 10px; /* Inner padding for spacing */
-  margin-bottom: 10px; /* Space between timers */
-  width: 100%; /* Full width */
-  max-width: 400px; /* Maximum width for larger screens */
-  text-align: center; /* Centers the text inside */
-  border-radius: 5px; /* Rounds the corners of the box */
+const TimersList = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 20px 0;
 `;
 
-// Button: Styles the buttons for controlling timers
+const TimerCard = styled.div<{ status: Timer['status'] }>`
+  background: #000;
+  border: 2px solid ${({ status }) => {
+      switch (status) {
+          case 'running':
+              return '#2ecc40';
+          case 'paused':
+              return '#ff851b';
+          case 'completed':
+              return '#ff4136';
+          default:
+              return '#ffd700';
+      }
+  }};
+  border-radius: 8px;
+  padding: 20px;
+  position: relative;
+`;
+
+const TimerDisplay = styled.div`
+  font-size: 2.5rem;
+  font-family: 'Digital-7', monospace;
+  text-align: center;
+  color: #ffd700;
+  margin: 10px 0;
+`;
+
+const TimerInfo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+const TimerTitle = styled.h3`
+  color: #ffd700;
+  margin: 0;
+`;
+
+const TimerStatus = styled.span<{ status: Timer['status'] }>`
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: ${({ status }) => {
+      switch (status) {
+          case 'running':
+              return '#2ecc40';
+          case 'paused':
+              return '#ff851b';
+          case 'completed':
+              return '#ff4136';
+          default:
+              return '#666';
+      }
+  }};
+  color: white;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: center;
+`;
+
 const Button = styled.button`
-  padding: 15px 30px; /* Adds padding inside the button */
-  font-size: 1.2rem; /* Sets medium font size */
-  border-radius: 5px; /* Rounds the corners of the button */
-  border: none; /* Removes default border */
-  cursor: pointer; /* Changes cursor to pointer on hover */
-  background-color: #000; /* Black background */
-  color: #ffd700; /* Yellow text color */
-  font-family: "Digital-7", "Roboto Mono", monospace; /* Digital-style font */
-  text-transform: uppercase; /* Makes text uppercase */
-  font-weight: bold; /* Makes text bold */
-  transition: all 0.3s; /* Adds smooth hover animation */
-  margin: 10px; /* Adds space between buttons */
+  padding: 12px 24px;
+  border-radius: 5px;
+  border: none;
+  background: #ffd700;
+  color: #000;
+  cursor: pointer;
+  font-weight: bold;
+  transition: opacity 0.2s;
 
   &:hover {
-    opacity: 0.9; /* Slight transparency on hover */
+    opacity: 0.8;
   }
 
-  &:active {
-    transform: scale(0.95); /* Shrinks button slightly on click */
+  &:disabled {
+    background: #666;
+    cursor: not-allowed;
   }
 `;
 
-// ------------------- Helper Function -------------------
+const RemoveButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #ff4136;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 5px;
 
-// formatTime: Converts milliseconds into a formatted time string (MM:SS.ms)
-const formatTime = (milliseconds: number): string => {
-  const minutes = Math.floor(milliseconds / 60000); // Calculate minutes
-  const seconds = Math.floor((milliseconds % 60000) / 1000); // Calculate seconds
-  const ms = Math.floor((milliseconds % 1000) / 10); // Calculate milliseconds (2 digits)
-  // Return formatted string in MM:SS.ms format
-  return `${minutes.toString().padStart(2, "0")}:${seconds
-    .toString()
-    .padStart(2, "0")}.${ms.toString().padStart(2, "0")}`;
+  &:hover {
+    color: #ff725c;
+  }
+`;
+
+const TotalTime = styled.div`
+  font-size: 1.2rem;
+  color: #ffd700;
+  margin: 20px 0;
+`;
+
+// ------------------- Helper Functions -------------------
+
+const formatTime = (ms: number): string => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const milliseconds = Math.floor((ms % 1000) / 10);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+};
+
+const getTimerDescription = (timer: Timer): string => {
+    switch (timer.type) {
+        case 'stopwatch':
+            return 'Count up to 2:30';
+        case 'countdown':
+            return `Count down from ${formatTime(timer.initialDuration)}`;
+        case 'XY':
+            return `${timer.rounds} rounds of ${formatTime(timer.workTime)} work / ${formatTime(timer.restTime)} rest`;
+        case 'tabata':
+            return `${timer.rounds} rounds of ${formatTime(timer.workTime)} work / ${formatTime(timer.restTime)} rest`;
+        default:
+            return '';
+    }
 };
 
 // ------------------- TimersView Component -------------------
 
-// TimersView: Displays a list of timers and controls for managing them
 const TimersView = () => {
-  // Access state and actions from the TimerContext
-  const { timers, toggleStartPause, resetTimers, fastForward, currentTimerIndex } =
-    useTimerContext();
+    const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime } = useTimerContext();
 
-  return (
-    <Container>
-      {/* Page title */}
-      <h1>Workout Timers</h1>
+    const renderTimerDetails = (timer: Timer, isActive: boolean) => {
+        if (!isActive) {
+            return <div>{getTimerDescription(timer)}</div>;
+        }
 
-      {/* Map over the timers and display each one */}
-      {timers.map((timer, index) => (
-        <TimerItem key={timer.id}>
-          {/* Display the type of timer (e.g., stopwatch, countdown) */}
-          <h2>{timer.type}</h2>
+        switch (timer.type) {
+            case 'stopwatch':
+                return <div>Time: {formatTime(timer.duration)}</div>;
 
-          {/* Display the current status of the timer (e.g., running, paused) */}
-          <p>Status: {timer.status}</p>
+            case 'countdown':
+                return <div>Remaining: {formatTime(timer.duration)}</div>;
 
-          {/* Show elapsed time for the active stopwatch timer */}
-          {index === currentTimerIndex && timer.type === "stopwatch" && (
-            <p>Time Elapsed: {formatTime(timer.duration)}</p>
-          )}
+            case 'XY':
+            case 'tabata':
+                return (
+                    <div>
+                        <div>
+                            Round: {timer.currentRound}/{timer.rounds}
+                        </div>
+                        <div>
+                            {timer.isWorking ? 'Work' : 'Rest'}: {formatTime(timer.duration)}
+                        </div>
+                    </div>
+                );
+        }
+    };
 
-          {/* Show remaining time for the active non-stopwatch timer */}
-          {index === currentTimerIndex && timer.type !== "stopwatch" && (
-            <p>Time Remaining: {formatTime(timer.duration)}</p>
-          )}
-        </TimerItem>
-      ))}
+    return (
+        <Container>
+            <h2>Workout Timers</h2>
 
-      {/* Buttons to control the timers */}
-      <Button onClick={toggleStartPause}>Start/Pause</Button> {/* Toggle start/pause */}
-      <Button onClick={resetTimers}>Reset</Button> {/* Reset all timers */}
-      <Button onClick={fastForward}>Fast-Forward</Button> {/* Skip to the next timer */}
-    </Container>
-  );
+            <TotalTime>Total Workout Time: {formatTime(getTotalTime())}</TotalTime>
+
+            <TimersList>
+                {timers.map((timer, index) => (
+                    <TimerCard key={timer.id} status={timer.status}>
+                        <RemoveButton onClick={() => removeTimer(timer.id)} disabled={timer.status === 'running'}>
+                            ×
+                        </RemoveButton>
+
+                        <TimerInfo>
+                            <TimerTitle>{timer.type.toUpperCase()}</TimerTitle>
+                            <TimerStatus status={timer.status}>{timer.status.toUpperCase()}</TimerStatus>
+                        </TimerInfo>
+
+                        <TimerDisplay>{renderTimerDetails(timer, index === currentTimerIndex)}</TimerDisplay>
+                    </TimerCard>
+                ))}
+            </TimersList>
+
+            <ButtonGroup>
+                <Button onClick={toggleStartPause} disabled={timers.length === 0}>
+                    {currentTimerIndex !== null && timers[currentTimerIndex]?.status === 'running' ? 'Pause' : 'Start'}
+                </Button>
+
+                <Button onClick={resetTimers} disabled={timers.length === 0}>
+                    Reset All
+                </Button>
+
+                <Button onClick={fastForward} disabled={currentTimerIndex === null}>
+                    Skip Timer
+                </Button>
+            </ButtonGroup>
+        </Container>
+    );
 };
 
-// Export the TimersView component as the default export
 export default TimersView;

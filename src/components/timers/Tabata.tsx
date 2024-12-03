@@ -1,214 +1,200 @@
-import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { useTimerContext } from '../../TimerContext';
+import type { Timer } from '../../TimerContext';
 
-const Tabata: React.FC = () => {
-  const [workTime, setWorkTime] = useState(20);
-  const [restTime, setRestTime] = useState(10);
-  const [rounds, setRounds] = useState(8);
+// ------------------- Styled Components -------------------
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background-color: #000;
+  border-radius: 10px;
+  border: 2px solid #ffd700;
+`;
+
+const TimeDisplay = styled.div`
+  font-family: "Digital-7", monospace;
+  font-size: 48px;
+  color: #ffd700;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 8px;
+  min-width: 300px;
+`;
+
+const Label = styled.div`
+  font-size: 1.2rem;
+  color: #ffd700;
+  text-align: center;
+  font-weight: bold;
+`;
+
+const RoundInfo = styled.div`
+  font-size: 1.8rem;
+  color: #ffd700;
+  margin: 10px 0;
+`;
+
+// PhaseIndicator is bigger and more prominent for Tabata
+const PhaseIndicator = styled.div<{ isWorking: boolean }>`
+  font-size: 2.5rem;
+  color: ${props => (props.isWorking ? '#2ecc40' : '#ff851b')};
+  font-weight: bold;
+  padding: 15px 30px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 3px solid ${props => (props.isWorking ? '#2ecc40' : '#ff851b')};
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px ${props => (props.isWorking ? '#2ecc40' : '#ff851b')};
+  animation: pulse 1s infinite;
   
-  const [time, setTime] = useState(0);
-  const [round, setRound] = useState(1);
-  const [isWorking, setIsWorking] = useState(true);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isConfiguring, setIsConfiguring] = useState(true);
-  const [countdown, setCountdown] = useState(3);
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+`;
 
-  const getBackgroundColor = () => {
-    if (isConfiguring || !isRunning) return '#f0f0f0'; // Gray
-    if (countdown > 0) return '#FFA500'; // Orange for countdown
-    if (isWorking) return '#90EE90'; // Green
-    return '#ffff00'; // Yellow for rest period
-  };
-
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column' as 'column',
-      alignItems: 'center',
-      padding: '20px',
-      borderRadius: '10px',
-      backgroundColor: getBackgroundColor(),
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-      transition: 'background-color 0.3s',
-    },
-    time: {
-      fontSize: '48px',
-      fontWeight: 'bold',
-      margin: '20px 0',
-      fontFamily: 'monospace',
-    },
-    info: {
-      fontSize: '24px',
-      marginBottom: '20px',
-    },
-    buttonContainer: {
-      display: 'flex',
-      gap: '10px',
-    },
-    button: {
-      padding: '10px 20px',
-      fontSize: '16px',
-      borderRadius: '5px',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'background-color 0.3s',
-    },
-    startStopButton: {
-      backgroundColor: isRunning ? '#ff4136' : '#2ecc40',
-      color: 'white',
-    },
-    resetButton: {
-      backgroundColor: '#ffdc00',
-      color: 'black',
-    },
-    endButton: {
-      backgroundColor: '#0074d9',
-      color: 'white',
-    },
-    input: {
-      margin: '5px',
-      padding: '5px',
-      width: '50px',
-    },
-  };
-
-  useEffect(() => {
-    let intervalId: number;
-    if (isRunning) {
-      if (countdown > 0) {
-        intervalId = setInterval(() => {
-          setCountdown(prev => prev - 1);
-        }, 1000);
-      } else {
-        intervalId = setInterval(() => {
-          setTime(prevTime => {
-            const newTime = prevTime + 10;
-            if ((isWorking && newTime >= workTime * 1000) || (!isWorking && newTime >= restTime * 1000)) {
-              if (isWorking) {
-                setIsWorking(false);
-                setCountdown(3);
-                return 0;
-              } else {
-                if (round < rounds) {
-                  setRound(prevRound => prevRound + 1);
-                  setIsWorking(true);
-                  setCountdown(3);
-                  return 0;
-                } else {
-                  setIsRunning(false);
-                  return newTime;
-                }
-              }
-            }
-            return newTime;
-          });
-        }, 10);
+const StatusBadge = styled.div<{ status: Timer['status'] }>`
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  background-color: ${({ status }) => {
+      switch (status) {
+          case 'running':
+              return '#2ecc40';
+          case 'paused':
+              return '#ff851b';
+          case 'completed':
+              return '#ff4136';
+          default:
+              return '#7f8c8d';
       }
-    }
-    return () => clearInterval(intervalId);
-  }, [isRunning, isWorking, workTime, restTime, round, rounds, countdown]);
+  }};
+  color: white;
+`;
 
-  const handleStartStop = () => {
-    if (isConfiguring) {
-      setIsConfiguring(false);
-      setTime(0);
-      setCountdown(3);
-    }
-    setIsRunning(!isRunning);
-  };
+const TimerInfo = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 10px;
+`;
 
-  const handleReset = () => {
-    setTime(0);
-    setRound(1);
-    setIsWorking(true);
-    setIsRunning(false);
-    setIsConfiguring(true);
-    setCountdown(3);
-  };
+const InfoBox = styled.div`
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  color: #ffd700;
+`;
 
-  const handleEnd = () => {
-    setIsRunning(false);
-    setTime(workTime * 1000);
-    setRound(rounds);
-    setIsWorking(false);
-    setCountdown(3);
-  };
-
-  const formatTime = (timeInMilliseconds: number): string => {
-    const minutes = Math.floor(timeInMilliseconds / 60000);
-    const seconds = Math.floor((timeInMilliseconds % 60000) / 1000);
-    const milliseconds = Math.floor((timeInMilliseconds % 1000) / 10);
-    const microseconds = timeInMilliseconds % 10;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}${microseconds}`;
-  };
-
-  return (
-    <div style={styles.container}>
-      {isConfiguring ? (
-        <div>
-          <div>
-            Work Time (seconds): 
-            <input 
-              style={styles.input}
-              type="number" 
-              value={workTime} 
-              onChange={(e) => setWorkTime(Math.max(1, parseInt(e.target.value) || 0))} 
-            />
-          </div>
-          <div>
-            Rest Time (seconds): 
-            <input 
-              style={styles.input}
-              type="number" 
-              value={restTime} 
-              onChange={(e) => setRestTime(Math.max(1, parseInt(e.target.value) || 0))} 
-            />
-          </div>
-          <div>
-            Number of Rounds: 
-            <input 
-              style={styles.input}
-              type="number" 
-              value={rounds} 
-              onChange={(e) => setRounds(Math.max(1, parseInt(e.target.value) || 0))} 
-            />
-          </div>
-        </div>
-      ) : (
-        <>
-          {countdown > 0 ? (
-            <div style={{...styles.time, fontSize: '72px'}}>{countdown}</div>
-          ) : (
-            <>
-              <div style={styles.time}>{formatTime(time)}</div>
-              <div style={styles.info}>
-                Round: {round}/{rounds} - {isWorking ? 'Work' : 'Rest'}
-              </div>
-            </>
-          )}
-        </>
-      )}
-      <div style={styles.buttonContainer}>
-        <button 
-          style={{...styles.button, ...styles.startStopButton}} 
-          onClick={handleStartStop}
-        >
-          {isRunning ? 'Pause' : 'Start'}
-        </button>
-        <button 
-          style={{...styles.button, ...styles.resetButton}} 
-          onClick={handleReset}
-        >
-          Reset
-        </button>
-        <button 
-          style={{...styles.button, ...styles.endButton}} 
-          onClick={handleEnd}
-        >
-          End
-        </button>
-      </div>
-    </div>
+const ProgressRing = styled.div<{ percent: number; isWorking: boolean }>`
+  width: 200px;
+  height: 200px;
+  position: relative;
+  border-radius: 50%;
+  background: conic-gradient(
+    ${props => (props.isWorking ? '#2ecc40' : '#ff851b')} ${props => props.percent * 3.6}deg,
+    transparent ${props => props.percent * 3.6}deg
   );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: #000;
+  }
+`;
+
+// ------------------- Helper Functions -------------------
+
+const formatTime = (timeInMilliseconds: number): string => {
+    const totalSeconds = Math.ceil(timeInMilliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export default Tabata;
+// ------------------- Component Interface -------------------
+
+interface TabataProps {
+    duration: number;
+    currentRound: number;
+    rounds: number;
+    workTime: number;
+    restTime: number;
+    isWorking: boolean;
+    status: Timer['status'];
+    isActive?: boolean;
+}
+
+// ------------------- Tabata Timer Component -------------------
+
+export default function Tabata({ duration, currentRound, rounds, workTime, restTime, isWorking, status, isActive = false }: TabataProps) {
+    const { fastForward } = useTimerContext();
+
+    // Calculate progress percentage for the current interval
+    const currentInterval = isWorking ? workTime : restTime;
+    const progressPercent = Math.floor((duration / currentInterval) * 100);
+
+    if (duration <= 0 && status === 'running') {
+        fastForward();
+    }
+
+    const renderActiveInfo = () => {
+        if (!isActive) return null;
+
+        return (
+            <>
+                <PhaseIndicator isWorking={isWorking}>{isWorking ? 'Work!' : 'Rest'}</PhaseIndicator>
+                <RoundInfo>
+                    Round {currentRound} of {rounds}
+                </RoundInfo>
+                <ProgressRing percent={progressPercent} isWorking={isWorking}>
+                    <TimeDisplay style={{ background: 'none', padding: 0 }}>{formatTime(duration)}</TimeDisplay>
+                </ProgressRing>
+                <TimerInfo>
+                    <InfoBox>Work: {formatTime(workTime)}</InfoBox>
+                    <InfoBox>Rest: {formatTime(restTime)}</InfoBox>
+                </TimerInfo>
+            </>
+        );
+    };
+
+    const renderSummary = () => {
+        if (isActive) return null;
+
+        return (
+            <TimerInfo>
+                <InfoBox>Rounds: {rounds}</InfoBox>
+                <InfoBox>Work: {formatTime(workTime)}</InfoBox>
+                <InfoBox>Rest: {formatTime(restTime)}</InfoBox>
+                <InfoBox>Total: {formatTime((workTime + restTime) * rounds)}</InfoBox>
+            </TimerInfo>
+        );
+    };
+
+    return (
+        <Container role="timer" aria-label="Tabata Timer">
+            <Label>TABATA</Label>
+            {!isActive && <TimeDisplay>{formatTime(duration)}</TimeDisplay>}
+            <StatusBadge status={status}>{status}</StatusBadge>
+            {isActive ? renderActiveInfo() : renderSummary()}
+        </Container>
+    );
+}

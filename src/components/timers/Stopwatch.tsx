@@ -1,135 +1,114 @@
-import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { useTimerContext } from '../../TimerContext';
+import type { Timer } from '../../TimerContext';
 
-//Time starts at 0 and not running
-//max time is 2 minutes and 30 seconds
-const Stopwatch: React.FC = () => {
-  const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const MAX_TIME = 150000; // 2 minutes and 30 seconds in milliseconds
+// ------------------- Styled Components -------------------
 
-//intervalID will hold the interval ID
-  useEffect(() => {
-    let intervalId: number;
-    //Check if the stopwatch is running
-    if (isRunning) {
-      // if it is start an interval that runs every 10 milliseconds
-      intervalId = setInterval(() => {
-        setTime(prevTime => {
-          // Stop the timer if it reaches MAX_TIME
-          if (prevTime + 10 >= MAX_TIME) {
-            setIsRunning(false);
-            return MAX_TIME;
-          }
-          return prevTime + 10;
-        });
-      }, 10);
-    }
-    //Return a cleanup function
-    return () => clearInterval(intervalId);
-  }, [isRunning]);
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background-color: #000;
+  border-radius: 10px;
+  border: 2px solid #ffd700;
+`;
 
-  //Will start and stop the watch
-  const handleStartStop = () => {
-    //if it is true, make it false, if its false make it true
-    setIsRunning(!isRunning);
-  };
+const TimeDisplay = styled.div`
+  font-family: "Digital-7", monospace;
+  font-size: 48px;
+  color: #ffd700;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 8px;
+  min-width: 300px;
+  aria-live: polite;
+`;
 
-  // Resets the stopwatch back to zero and stops it
-  const handleReset = () => {
-    setTime(0);
-    setIsRunning(false);
-  };
+const Label = styled.div`
+  font-size: 1.2rem;
+  color: #ffd700;
+  text-align: center;
+  font-weight: bold;
+`;
 
-  // Sets the stopwatch to the maximum time and stops it
-  const handleEnd = () => {
-    setIsRunning(false);
-    setTime(MAX_TIME); // Set time to max when ending
-  };
+const StatusBadge = styled.div<{ status: Timer['status'] }>`
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  background-color: ${({ status }) => {
+      switch (status) {
+          case 'running':
+              return '#2ecc40';
+          case 'paused':
+              return '#ff851b';
+          case 'completed':
+              return '#ff4136';
+          default:
+              return '#7f8c8d';
+      }
+  }};
+  color: white;
+`;
 
-  // Function to format time in MM:SS.mmu format
-  const formatTime = (timeInMilliseconds: number): string => {
-    // Ensure time doesn't exceed MAX_TIME (2:30)
-    //Math your way into minutes, seconds, miliseconds and microseconds
-    const clampedTime = Math.min(timeInMilliseconds, MAX_TIME);
-    const minutes = Math.floor(clampedTime / 60000);
-    const seconds = Math.floor((clampedTime % 60000) / 1000);
-    const milliseconds = Math.floor((clampedTime % 1000) / 10);
-    const microseconds = clampedTime % 10;
-// Combine the results into a string
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}${microseconds}`;
-  };
+const TimeInfo = styled.div`
+  color: #ffd700;
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 10px;
+`;
 
-  //////////////////Styles//////////////////
-  // This will be used in all of the buttons for all the clocks//
-  //DO NOT CHANGE//
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column' as 'column',
-      alignItems: 'center',
-      padding: '20px',
-      borderRadius: '10px',
-      backgroundColor: '#f0f0f0',
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    },
-    time: {
-      fontSize: '48px',
-      fontWeight: 'bold',
-      margin: '20px 0',
-      fontFamily: 'monospace',
-    },
-    buttonContainer: {
-      display: 'flex',
-      gap: '10px',
-    },
-    button: {
-      padding: '10px 20px',
-      fontSize: '16px',
-      borderRadius: '5px',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'background-color 0.3s',
-    },
-    startStopButton: {
-      backgroundColor: isRunning ? '#ff4136' : '#2ecc40',
-      color: 'white',
-    },
-    resetButton: {
-      backgroundColor: '#ffdc00',
-      color: 'black',
-    },
-    endButton: {
-      backgroundColor: '#0074d9',
-      color: 'white',
-    },
-  };
-///END STYLES?///
+// ------------------- Helper Functions -------------------
 
-//JSX defines the UI of the stopwatch//
-  return (
-    <div style={styles.container}>
-      <div style={styles.time}>{formatTime(time)}</div>
-      <div style={styles.buttonContainer}>
-        <button 
-          style={{...styles.button, ...styles.startStopButton}} 
-          onClick={handleStartStop}
-        >
-          {isRunning ? 'Pause' : 'Start'}
-        </button>
-        <button 
-          style={{...styles.button, ...styles.resetButton}} 
-          onClick={handleReset}
-        >
-          Reset
-        </button>
-        <button 
-          style={{...styles.button, ...styles.endButton}} 
-          onClick={handleEnd}
-        >
-          End
-        </button>
-      </div>
-    </div>
-  );
+const formatTime = (timeInMilliseconds: number): string => {
+    const minutes = Math.floor(timeInMilliseconds / 60000);
+    const seconds = Math.floor((timeInMilliseconds % 60000) / 1000);
+    const milliseconds = Math.floor((timeInMilliseconds % 1000) / 10);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
 };
-export default Stopwatch;
+
+// ------------------- Stopwatch Component -------------------
+
+interface StopwatchProps {
+    duration: number;
+    status: Timer['status']; // Using the exact type from TimerContext
+    isActive?: boolean;
+}
+
+export default function Stopwatch({ duration, status, isActive = false }: StopwatchProps) {
+    const { fastForward } = useTimerContext();
+
+    // Maximum time for stopwatch (2 minutes and 30 seconds)
+    const MAX_TIME = 150000;
+
+    // Check if the stopwatch has reached its maximum time
+    const isMaxTimeReached = duration >= MAX_TIME;
+
+    // Handle stopping at max time
+    if (isMaxTimeReached && status === 'running') {
+        fastForward();
+    }
+
+    const renderTimeInfo = () => {
+        if (!isActive) return null;
+
+        return (
+            <TimeInfo role="status" aria-live="polite">
+                {duration < MAX_TIME ? <span>Time until max: {formatTime(MAX_TIME - duration)}</span> : <span>Maximum time reached</span>}
+            </TimeInfo>
+        );
+    };
+
+    return (
+        <Container role="timer" aria-label="Stopwatch Timer">
+            <Label>STOPWATCH</Label>
+            <TimeDisplay>{formatTime(Math.min(duration, MAX_TIME))}</TimeDisplay>
+            <StatusBadge status={status}>{status}</StatusBadge>
+            {renderTimeInfo()}
+        </Container>
+    );
+}

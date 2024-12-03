@@ -1,26 +1,20 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTimerContext } from "../TimerContext";
-import { v4 as uuidv4 } from "uuid";
-import styled from "styled-components";
-import type { FC } from "react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { v4 as uuidv4 } from 'uuid';
+import { useTimerContext } from '../TimerContext';
+import type { Timer } from '../TimerContext';
 
-// Styled components for Add Timer View
+// ------------------- Styled Components -------------------
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background-color: #222;
-  color: #ffd700;
-  font-family: "Digital-7", "Roboto Mono", monospace;
-  min-height: 100vh;
   padding: 20px;
-`;
-
-const Title = styled.h1`
-  font-size: 2rem;
-  margin-bottom: 20px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 `;
 
 const Form = styled.form`
@@ -28,125 +22,239 @@ const Form = styled.form`
   flex-direction: column;
   gap: 20px;
   width: 100%;
-  max-width: 400px;
 `;
 
-const Input = styled.input`
-  padding: 15px;
-  font-size: 1.2rem;
-  border-radius: 5px;
-  border: none;
-  background-color: #000;
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const Label = styled.label`
   color: #ffd700;
+  font-size: 1.1rem;
 `;
 
 const Select = styled.select`
-  padding: 15px;
-  font-size: 1.2rem;
+  padding: 12px;
   border-radius: 5px;
-  border: none;
-  background-color: #000;
+  border: 1px solid #ffd700;
+  background: #000;
   color: #ffd700;
+  font-size: 1rem;
 `;
 
-const ButtonContainer = styled.div`
+const Input = styled.input`
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid #ffd700;
+  background: #000;
+  color: #ffd700;
+  font-size: 1rem;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+`;
+
+const ButtonGroup = styled.div`
   display: flex;
-  gap: 20px;
+  gap: 15px;
   justify-content: center;
+  margin-top: 20px;
 `;
 
-const Button = styled.button`
-  padding: 15px 30px;
-  font-size: 1.2rem;
+const Button = styled.button<{ $variant?: 'submit' | 'cancel' }>`
+  padding: 12px 24px;
   border-radius: 5px;
   border: none;
+  background: ${props => (props.$variant === 'submit' ? '#ffd700' : '#666')};
+  color: ${props => (props.$variant === 'submit' ? '#000' : '#fff')};
   cursor: pointer;
-  font-family: "Digital-7", "Roboto Mono", monospace;
-  text-transform: uppercase;
+  font-size: 1rem;
   font-weight: bold;
-  transition: all 0.3s;
-  background-color: #ccc;
-  color: #000;
+  transition: opacity 0.2s;
 
   &:hover {
-    opacity: 0.9;
-  }
-
-  &:active {
-    transform: scale(0.95);
+    opacity: 0.8;
   }
 `;
 
-const AddTimerView: FC = () => {
-  const { addTimer } = useTimerContext();
-  const navigate = useNavigate();
+// ------------------- AddTimerView Component -------------------
 
-  // State for timer inputs
-  const [type, setType] = useState<"stopwatch" | "countdown" | "XY" | "tabata">("stopwatch");
-  const [duration, setDuration] = useState<number>(0); // In seconds
-  const [description, setDescription] = useState<string>(""); // State for the description
+function AddTimerView() {
+    const navigate = useNavigate();
+    const { addTimer } = useTimerContext();
 
-  const handleAddTimer = (e: React.FormEvent) => {
-    e.preventDefault();
+    // Basic timer state
+    const [type, setType] = useState<Timer['type']>('stopwatch');
 
-    // Add the new timer to the TimerContext
-    addTimer({
-      id: uuidv4(),
-      type,
-      duration: type === "stopwatch" ? 0 : duration * 1000, // Convert seconds to milliseconds
-      status: "not running",
-      description, // Add the description
-    });
+    // Common timer states
+    const [duration, setDuration] = useState<number | ''>(60);
 
-    // Navigate back to the main page after adding the timer
-    navigate("/");
-  };
+    // XY and Tabata specific states
+    const [rounds, setRounds] = useState(5);
+    const [workTime, setWorkTime] = useState(30);
+    const [restTime, setRestTime] = useState(10);
 
-  return (
-    <Container>
-      <Title>Add a New Timer</Title>
-      <Form onSubmit={handleAddTimer}>
-        <Select
-          value={type}
-          onChange={(e) =>
-            setType(e.target.value as "stopwatch" | "countdown" | "XY" | "tabata")
-          }
-        >
-          <option value="stopwatch">Stopwatch</option>
-          <option value="countdown">Countdown</option>
-          <option value="XY">XY Timer</option>
-          <option value="tabata">Tabata Timer</option>
-        </Select>
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
 
-        {type !== "stopwatch" && (
-          <Input
-            type="number"
-            min="0"
-            placeholder="Enter duration (seconds)"
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            required
-          />
-        )}
+        // Ensure duration is a number for countdown timer
+        const finalDuration = typeof duration === 'number' ? duration : 0;
 
-        {/* Input for timer description */}
-        <Input
-          type="text"
-          placeholder="Enter description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
+        let newTimer: Timer;
 
-        <ButtonContainer>
-          <Button type="submit">Add Timer</Button>
-          <Button type="button" onClick={() => navigate("/")}>
-            Cancel
-          </Button>
-        </ButtonContainer>
-      </Form>
-    </Container>
-  );
-};
+        switch (type) {
+            case 'stopwatch':
+                newTimer = {
+                    id: uuidv4(),
+                    type: 'stopwatch',
+                    duration: 0,
+                    status: 'not running',
+                };
+                break;
+
+            case 'countdown':
+                newTimer = {
+                    id: uuidv4(),
+                    type: 'countdown',
+                    duration: finalDuration * 1000,
+                    initialDuration: finalDuration * 1000,
+                    status: 'not running',
+                };
+                break;
+
+            case 'XY':
+                newTimer = {
+                    id: uuidv4(),
+                    type: 'XY',
+                    rounds: rounds,
+                    currentRound: 1,
+                    workTime: workTime * 1000,
+                    restTime: restTime * 1000,
+                    isWorking: true,
+                    duration: workTime * 1000,
+                    status: 'not running',
+                };
+                break;
+
+            case 'tabata':
+                newTimer = {
+                    id: uuidv4(),
+                    type: 'tabata',
+                    rounds: rounds,
+                    currentRound: 1,
+                    workTime: workTime * 1000,
+                    restTime: restTime * 1000,
+                    isWorking: true,
+                    duration: workTime * 1000,
+                    status: 'not running',
+                };
+                break;
+        }
+
+        addTimer(newTimer);
+        navigate('/');
+    };
+
+    return (
+        <Container>
+            <h2>Add New Timer</h2>
+            <Form onSubmit={handleSubmit}>
+                <FormGroup>
+                    <Label>Timer Type</Label>
+                    <Select value={type} onChange={e => setType(e.target.value as Timer['type'])}>
+                        <option value="stopwatch">Stopwatch</option>
+                        <option value="countdown">Countdown</option>
+                        <option value="XY">XY</option>
+                        <option value="tabata">Tabata</option>
+                    </Select>
+                </FormGroup>
+
+                {type === 'countdown' && (
+                    <FormGroup>
+                        <Label>Duration (seconds)</Label>
+                        <Input
+                            type="number"
+                            min="0"
+                            value={duration}
+                            onChange={e => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                    setDuration('');
+                                } else {
+                                    const num = Number.parseInt(value, 10);
+                                    setDuration(Number.isNaN(num) ? 0 : Math.max(0, num));
+                                }
+                            }}
+                            required
+                        />
+                    </FormGroup>
+                )}
+
+                {(type === 'XY' || type === 'tabata') && (
+                    <>
+                        <FormGroup>
+                            <Label>Number of Rounds</Label>
+                            <Input
+                                type="number"
+                                min="1"
+                                value={rounds}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    const num = Number.parseInt(value, 10);
+                                    setRounds(Number.isNaN(num) ? 1 : Math.max(1, num));
+                                }}
+                                required
+                            />
+                        </FormGroup>
+
+                        <FormGroup>
+                            <Label>Work Time (seconds)</Label>
+                            <Input
+                                type="number"
+                                min="1"
+                                value={workTime}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    const num = Number.parseInt(value, 10);
+                                    setWorkTime(Number.isNaN(num) ? 1 : Math.max(1, num));
+                                }}
+                                required
+                            />
+                        </FormGroup>
+
+                        <FormGroup>
+                            <Label>Rest Time (seconds)</Label>
+                            <Input
+                                type="number"
+                                min="1"
+                                value={restTime}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    const num = Number.parseInt(value, 10);
+                                    setRestTime(Number.isNaN(num) ? 1 : Math.max(1, num));
+                                }}
+                                required
+                            />
+                        </FormGroup>
+                    </>
+                )}
+
+                <ButtonGroup>
+                    <Button $variant="submit" type="submit">
+                        Add Timer
+                    </Button>
+                    <Button type="button" onClick={() => navigate('/')}>
+                        Cancel
+                    </Button>
+                </ButtonGroup>
+            </Form>
+        </Container>
+    );
+}
 
 export default AddTimerView;
