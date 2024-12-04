@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { decodeURLToTimers, encodeTimersToURL } from './utils/urlState';
 
 // Base timer configuration
 interface BaseTimer {
@@ -11,13 +13,13 @@ interface BaseTimer {
 // Specific timer configurations
 export interface StopwatchTimer extends BaseTimer {
     type: 'stopwatch';
-    duration: number; // Current elapsed time
+    duration: number;
 }
 
 export interface CountdownTimer extends BaseTimer {
     type: 'countdown';
-    duration: number; // Time remaining
-    initialDuration: number; // Starting duration
+    duration: number;
+    initialDuration: number;
 }
 
 export interface XYTimer extends BaseTimer {
@@ -27,7 +29,7 @@ export interface XYTimer extends BaseTimer {
     workTime: number;
     restTime: number;
     isWorking: boolean;
-    duration: number; // Current interval time remaining
+    duration: number;
 }
 
 export interface TabataTimer extends BaseTimer {
@@ -37,10 +39,9 @@ export interface TabataTimer extends BaseTimer {
     workTime: number;
     restTime: number;
     isWorking: boolean;
-    duration: number; // Current interval time remaining
+    duration: number;
 }
 
-// Union type of all timer types
 export type Timer = StopwatchTimer | CountdownTimer | XYTimer | TabataTimer;
 
 export type TimerContextType = {
@@ -54,13 +55,38 @@ export type TimerContextType = {
     getTotalTime: () => number;
 };
 
-// Export the context itself so components can use it directly if needed
 export const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [timers, setTimers] = useState<Timer[]>([]);
     const [currentTimerIndex, setCurrentTimerIndex] = useState<number | null>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
 
+    // Load timers from URL when component mounts or searchParams changes
+    useEffect(() => {
+        const timerConfig = searchParams.get('config');
+        if (timerConfig) {
+            const loadedTimers = decodeURLToTimers(timerConfig);
+            setTimers(loadedTimers);
+        }
+    }, [searchParams]);
+
+    // Update URL when timers change and workout isn't running
+    useEffect(() => {
+        if (currentTimerIndex === null) {
+            // Only update URL when workout isn't in progress
+            if (timers.length > 0) {
+                const timerConfig = encodeTimersToURL(timers);
+                setSearchParams({ config: timerConfig }, { replace: true });
+            } else {
+                const newSearchParams = new URLSearchParams(searchParams);
+                newSearchParams.delete('config');
+                setSearchParams(newSearchParams, { replace: true });
+            }
+        }
+    }, [timers, currentTimerIndex, setSearchParams, searchParams]);
+
+    // Timer interval effect
     useEffect(() => {
         if (currentTimerIndex === null) return;
 
@@ -75,19 +101,21 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 if (!timer) return prevTimers;
 
                 switch (timer.type) {
-                    case 'stopwatch':
+                    case 'stopwatch': {
                         timer.duration += 10;
                         break;
+                    }
 
-                    case 'countdown':
+                    case 'countdown': {
                         timer.duration = Math.max(0, timer.duration - 10);
                         if (timer.duration === 0) {
                             timer.status = 'completed';
                         }
                         break;
+                    }
 
                     case 'XY':
-                    case 'tabata':
+                    case 'tabata': {
                         timer.duration = Math.max(0, timer.duration - 10);
                         if (timer.duration === 0) {
                             if (timer.isWorking) {
@@ -104,6 +132,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                             }
                         }
                         break;
+                    }
                 }
 
                 return updatedTimers;
@@ -128,12 +157,14 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setTimers(prev =>
             prev.map(timer => {
                 switch (timer.type) {
-                    case 'stopwatch':
+                    case 'stopwatch': {
                         return { ...timer, duration: 0, status: 'not running' };
-                    case 'countdown':
+                    }
+                    case 'countdown': {
                         return { ...timer, duration: timer.initialDuration, status: 'not running' };
+                    }
                     case 'XY':
-                    case 'tabata':
+                    case 'tabata': {
                         return {
                             ...timer,
                             duration: timer.workTime,
@@ -141,6 +172,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                             isWorking: true,
                             status: 'not running',
                         };
+                    }
                 }
             }),
         );
