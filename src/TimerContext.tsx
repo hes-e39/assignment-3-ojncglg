@@ -65,7 +65,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const currentTimer = timers[currentTimerIndex];
         if (currentTimer?.status !== 'running') return;
 
-        const intervalId = setInterval(() => {
+        const timeoutId = setTimeout(() => {
             setTimers(prevTimers => {
                 const updatedTimers = [...prevTimers];
                 const timer = updatedTimers[currentTimerIndex];
@@ -76,7 +76,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                     case 'stopwatch':
                         timer.duration += 10;
                         break;
-                    
+
                     case 'countdown':
                         timer.duration = Math.max(0, timer.duration - 10);
                         if (timer.duration === 0) {
@@ -108,7 +108,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             });
         }, 10);
 
-        return () => clearInterval(intervalId);
+        return () => clearTimeout(timeoutId);
     }, [currentTimerIndex, timers]);
 
     const addTimer = (timer: Timer) => {
@@ -118,67 +118,51 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const removeTimer = (id: string) => {
         setTimers(prev => prev.filter(timer => timer.id !== id));
         if (currentTimerIndex !== null) {
-            setCurrentTimerIndex(prev => 
-                prev !== null && timers[prev].id === id 
-                    ? null 
-                    : prev
-            );
+            setCurrentTimerIndex(prev => (prev !== null && timers[prev].id === id ? null : prev));
         }
     };
 
     const resetTimers = () => {
-        setTimers(prev => prev.map(timer => {
-            switch (timer.type) {
-                case 'stopwatch':
-                    return { ...timer, duration: 0, status: 'not running' };
-                case 'countdown':
-                    return { ...timer, duration: timer.initialDuration, status: 'not running' };
-                case 'XY':
-                case 'tabata':
-                    return {
-                        ...timer,
-                        duration: timer.workTime,
-                        currentRound: 1,
-                        isWorking: true,
-                        status: 'not running'
-                    };
-            }
-        }));
+        setTimers(prev =>
+            prev.map(timer => {
+                switch (timer.type) {
+                    case 'stopwatch':
+                        return { ...timer, duration: 0, status: 'not running' };
+                    case 'countdown':
+                        return { ...timer, duration: timer.initialDuration, status: 'not running' };
+                    case 'XY':
+                    case 'tabata':
+                        return {
+                            ...timer,
+                            duration: timer.workTime,
+                            currentRound: 1,
+                            isWorking: true,
+                            status: 'not running',
+                        };
+                }
+            }),
+        );
         setCurrentTimerIndex(null);
     };
 
     const toggleStartPause = () => {
         if (currentTimerIndex === null && timers.length > 0) {
             setCurrentTimerIndex(0);
-            setTimers(prev => prev.map((timer, index) => 
-                index === 0 ? { ...timer, status: 'running' } : timer
-            ));
+            setTimers(prev => prev.map((timer, index) => (index === 0 ? { ...timer, status: 'running' } : timer)));
         } else if (currentTimerIndex !== null) {
-            setTimers(prev => prev.map((timer, index) => 
-                index === currentTimerIndex 
-                    ? { ...timer, status: timer.status === 'running' ? 'paused' : 'running' }
-                    : timer
-            ));
+            setTimers(prev => prev.map((timer, index) => (index === currentTimerIndex ? { ...timer, status: timer.status === 'running' ? 'paused' : 'running' } : timer)));
         }
     };
 
     const fastForward = () => {
         if (currentTimerIndex === null) return;
 
-        setTimers(prev => prev.map((timer, index) => 
-            index === currentTimerIndex 
-                ? { ...timer, status: 'completed' }
-                : timer
-        ));
+        setTimers(prev => prev.map((timer, index) => (index === currentTimerIndex ? { ...timer, status: 'completed' } : timer)));
 
         const nextIndex = currentTimerIndex + 1;
         if (nextIndex < timers.length) {
             setCurrentTimerIndex(nextIndex);
-            setTimers(prev => prev.map((timer, index) => 
-                index === nextIndex 
-                    ? { ...timer, status: 'running' }
-                    : timer
-            ));
+            setTimers(prev => prev.map((timer, index) => (index === nextIndex ? { ...timer, status: 'running' } : timer)));
         } else {
             setCurrentTimerIndex(null);
         }
@@ -208,7 +192,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 addTimer,
                 removeTimer,
                 resetTimers,
-                getTotalTime
+                getTotalTime,
             }}
         >
             {children}
