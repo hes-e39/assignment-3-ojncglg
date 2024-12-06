@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useTimerContext } from '../../TimerContext';
 import type { Timer } from '../../TimerContext';
+import { formatTime } from '../../utils/timeUtils';
 import { Container, InfoBox, Label, StatusBadge, TimeDisplay } from '../SharedStyles';
 
 // ------------------- Styled Components -------------------
@@ -31,15 +32,6 @@ const TimerInfo = styled.div`
   max-width: 300px;
   margin-top: 10px;
 `;
-
-// ------------------- Helper Functions -------------------
-
-const formatTime = (timeInMilliseconds: number): string => {
-    const totalSeconds = Math.ceil(timeInMilliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-};
 
 // ------------------- Component Interface -------------------
 

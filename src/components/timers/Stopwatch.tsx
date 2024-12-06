@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { useTimerContext } from '../../TimerContext';
+import { formatTime } from '../../utils/timeUtils';
 import { TIMER_CONFIG } from '../../utils/timerConfig';
 
 // ------------------- Styled Components -------------------
@@ -40,16 +41,16 @@ const StatusBadge = styled.div<{ status: string }>`
   font-weight: bold;
   text-transform: uppercase;
   background-color: ${({ status }) => {
-    switch (status) {
-      case 'running':
-        return '#2ecc40';
-      case 'paused':
-        return '#ff851b';
-      case 'completed':
-        return '#ff4136';
-      default:
-        return '#7f8c8d';
-    }
+      switch (status) {
+          case 'running':
+              return '#2ecc40';
+          case 'paused':
+              return '#ff851b';
+          case 'completed':
+              return '#ff4136';
+          default:
+              return '#7f8c8d';
+      }
   }};
   color: white;
 `;
@@ -61,50 +62,35 @@ const TimeInfo = styled.div`
   margin-top: 10px;
 `;
 
-// ------------------- Helper Functions -------------------
-
-const formatTime = (timeInMilliseconds: number): string => {
-  const minutes = Math.floor(timeInMilliseconds / 60000);
-  const seconds = Math.floor((timeInMilliseconds % 60000) / 1000);
-  const milliseconds = Math.floor((timeInMilliseconds % 1000) / 10);
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
-};
-
 // ------------------- Stopwatch Component -------------------
 
 interface StopwatchProps {
-  duration: number;
-  status: 'not running' | 'running' | 'paused' | 'completed';
-  isActive?: boolean;
+    duration: number;
+    status: 'not running' | 'running' | 'paused' | 'completed';
+    isActive?: boolean;
 }
 
 export default function Stopwatch({ duration, status, isActive = false }: StopwatchProps) {
-  const { fastForward } = useTimerContext();
+    const { fastForward } = useTimerContext();
 
-  // Check if the stopwatch has reached its maximum time
-  const isMaxTimeReached = duration >= TIMER_CONFIG.STOPWATCH_MAX_TIME;
+    // Check if the stopwatch has reached its maximum time
+    const isMaxTimeReached = duration >= TIMER_CONFIG.STOPWATCH_MAX_TIME;
 
-  // Handle stopping at max time
-  if (isMaxTimeReached && status === 'running') {
-    fastForward();
-  }
+    // Handle stopping at max time
+    if (isMaxTimeReached && status === 'running') {
+        fastForward();
+    }
 
-  return (
-    <Container role="timer" aria-label="Stopwatch Timer">
-      <Label>STOPWATCH</Label>
-      <TimeDisplay>
-        {formatTime(Math.min(duration, TIMER_CONFIG.STOPWATCH_MAX_TIME))}
-      </TimeDisplay>
-      <StatusBadge status={status}>{status}</StatusBadge>
-      {isActive && (
-        <TimeInfo role="status" aria-live="polite">
-          {duration < TIMER_CONFIG.STOPWATCH_MAX_TIME ? (
-            <span>Time until max: {formatTime(TIMER_CONFIG.STOPWATCH_MAX_TIME - duration)}</span>
-          ) : (
-            <span>Maximum time reached</span>
-          )}
-        </TimeInfo>
-      )}
-    </Container>
-  );
+    return (
+        <Container role="timer" aria-label="Stopwatch Timer">
+            <Label>STOPWATCH</Label>
+            <TimeDisplay>{formatTime(Math.min(duration, TIMER_CONFIG.STOPWATCH_MAX_TIME))}</TimeDisplay>
+            <StatusBadge status={status}>{status}</StatusBadge>
+            {isActive && (
+                <TimeInfo role="status" aria-live="polite">
+                    {duration < TIMER_CONFIG.STOPWATCH_MAX_TIME ? <span>Time until max: {formatTime(TIMER_CONFIG.STOPWATCH_MAX_TIME - duration)}</span> : <span>Maximum time reached</span>}
+                </TimeInfo>
+            )}
+        </Container>
+    );
 }
