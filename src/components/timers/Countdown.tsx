@@ -1,75 +1,9 @@
 import styled from 'styled-components';
 import { useTimerContext } from '../../TimerContext';
 import type { Timer } from '../../TimerContext';
+import { Container, InfoBox, Label, StatusBadge, TimeDisplay } from '../SharedStyles';
 
 // ------------------- Styled Components -------------------
-
-// Main container for the countdown timer
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  padding: 20px;
-  background-color: #000;
-  border-radius: 10px;
-  border: 2px solid #ffd700;
-  width: 100%;
-  max-width: 400px;
-`;
-
-// Large digital-style display for the time
-const TimeDisplay = styled.div`
-  font-family: "Digital-7", monospace;
-  font-size: 48px;
-  color: #ffd700;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 20px;
-  border-radius: 8px;
-  min-width: 300px;
-  aria-live: polite;
-`;
-
-// Title label above the timer
-const Label = styled.div`
-  font-size: 1.2rem;
-  color: #ffd700;
-  text-align: center;
-  font-weight: bold;
-`;
-
-// Badge showing the current status
-const StatusBadge = styled.div<{ status: Timer['status'] }>`
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  background-color: ${({ status }) => {
-      switch (status) {
-          case 'running':
-              return '#2ecc40';
-          case 'paused':
-              return '#ff851b';
-          case 'completed':
-              return '#ff4136';
-          default:
-              return '#7f8c8d';
-      }
-  }};
-  color: white;
-`;
-
-// Container for the progress section
-const ProgressSection = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 0 20px;
-`;
 
 // Progress bar container with fixed dimensions and visible background
 const ProgressBarContainer = styled.div`
@@ -99,14 +33,6 @@ const ProgressLabel = styled.div`
   margin-bottom: 5px;
 `;
 
-// Container for additional timer information
-const TimeInfo = styled.div`
-  color: #ffd700;
-  font-size: 1rem;
-  text-align: center;
-  margin-top: 10px;
-`;
-
 // ------------------- Helper Functions -------------------
 
 const formatTime = (timeInMilliseconds: number): string => {
@@ -130,8 +56,7 @@ interface CountdownProps {
 export default function Countdown({ duration, initialDuration, status, isActive = false }: CountdownProps) {
     const { fastForward } = useTimerContext();
 
-    // Calculate progress percentage
-    const progressPercent = Math.floor((duration / initialDuration) * 100);
+    const progressPercent = initialDuration > 0 ? Math.floor((duration / initialDuration) * 100) : 0;
 
     if (duration <= 0 && status === 'running') {
         fastForward();
@@ -141,23 +66,19 @@ export default function Countdown({ duration, initialDuration, status, isActive 
         if (!isActive) return null;
 
         return (
-            <ProgressSection>
+            <>
                 <ProgressLabel>{Math.max(0, progressPercent)}% Remaining</ProgressLabel>
                 <ProgressBarContainer>
                     <Progress percent={progressPercent} role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100} />
                 </ProgressBarContainer>
-            </ProgressSection>
+            </>
         );
     };
 
     const renderTimeInfo = () => {
         if (!isActive) return null;
 
-        return (
-            <TimeInfo role="status" aria-live="polite">
-                {duration > 0 ? <span>Initial Time: {formatTime(initialDuration)}</span> : <span>Time's up!</span>}
-            </TimeInfo>
-        );
+        return <InfoBox>{duration > 0 ? <span>Initial Time: {formatTime(initialDuration)}</span> : <span>Time's up!</span>}</InfoBox>;
     };
 
     return (

@@ -59,6 +59,12 @@ const Input = styled.input`
   }
 `;
 
+const ErrorMessage = styled.div`
+  color: #ff4136;
+  font-size: 0.9rem;
+  margin-top: -10px;
+`;
+
 const ButtonGroup = styled.div`
   display: flex;
   gap: 15px;
@@ -80,6 +86,11 @@ const Button = styled.button<{ $variant?: 'submit' | 'cancel' }>`
   &:hover {
     opacity: 0.8;
   }
+
+  &:disabled {
+    background: #666;
+    cursor: not-allowed;
+  }
 `;
 
 // ------------------- AddTimerView Component -------------------
@@ -88,21 +99,30 @@ function AddTimerView() {
     const navigate = useNavigate();
     const { addTimer } = useTimerContext();
 
-    // Basic timer state
+    // Timer state
     const [type, setType] = useState<Timer['type']>('stopwatch');
+    const [duration, setDuration] = useState<number | ''>(60); // For countdown
+    const [rounds, setRounds] = useState<number>(0); // For XY and Tabata
+    const [workTime, setWorkTime] = useState<number>(0); // For XY and Tabata
+    const [restTime, setRestTime] = useState<number>(0); // For XY and Tabata
+    const [error, setError] = useState<string | null>(null); // Error message state
 
-    // Common timer states
-    const [duration, setDuration] = useState<number | ''>(60);
-
-    // XY and Tabata specific states
-    const [rounds, setRounds] = useState(5);
-    const [workTime, setWorkTime] = useState(30);
-    const [restTime, setRestTime] = useState(10);
+    const validateInputs = (): boolean => {
+        if (type === 'XY' || type === 'tabata') {
+            if (rounds <= 0 || workTime <= 0 || restTime <= 0) {
+                setError('Dont be silly, Rounds, Work Time, and Rest Time must be greater than 0.');
+                return false;
+            }
+        }
+        setError(null);
+        return true;
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Ensure duration is a number for countdown timer
+        if (!validateInputs()) return;
+
         const finalDuration = typeof duration === 'number' ? duration : 0;
 
         let newTimer: Timer;
@@ -131,7 +151,7 @@ function AddTimerView() {
                 newTimer = {
                     id: uuidv4(),
                     type: 'XY',
-                    rounds: rounds,
+                    rounds,
                     currentRound: 1,
                     workTime: workTime * 1000,
                     restTime: restTime * 1000,
@@ -145,7 +165,7 @@ function AddTimerView() {
                 newTimer = {
                     id: uuidv4(),
                     type: 'tabata',
-                    rounds: rounds,
+                    rounds,
                     currentRound: 1,
                     workTime: workTime * 1000,
                     restTime: restTime * 1000,
@@ -177,21 +197,7 @@ function AddTimerView() {
                 {type === 'countdown' && (
                     <FormGroup>
                         <Label>Duration (seconds)</Label>
-                        <Input
-                            type="number"
-                            min="0"
-                            value={duration}
-                            onChange={e => {
-                                const value = e.target.value;
-                                if (value === '') {
-                                    setDuration('');
-                                } else {
-                                    const num = Number.parseInt(value, 10);
-                                    setDuration(Number.isNaN(num) ? 0 : Math.max(0, num));
-                                }
-                            }}
-                            required
-                        />
+                        <Input type="number" min="0" value={duration} onChange={e => setDuration(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))} required />
                     </FormGroup>
                 )}
 
@@ -199,53 +205,25 @@ function AddTimerView() {
                     <>
                         <FormGroup>
                             <Label>Number of Rounds</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                value={rounds}
-                                onChange={e => {
-                                    const value = e.target.value;
-                                    const num = Number.parseInt(value, 10);
-                                    setRounds(Number.isNaN(num) ? 1 : Math.max(1, num));
-                                }}
-                                required
-                            />
+                            <Input type="number" min="0" value={rounds} onChange={e => setRounds(Math.max(0, Number(e.target.value)))} required />
                         </FormGroup>
 
                         <FormGroup>
                             <Label>Work Time (seconds)</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                value={workTime}
-                                onChange={e => {
-                                    const value = e.target.value;
-                                    const num = Number.parseInt(value, 10);
-                                    setWorkTime(Number.isNaN(num) ? 1 : Math.max(1, num));
-                                }}
-                                required
-                            />
+                            <Input type="number" min="0" value={workTime} onChange={e => setWorkTime(Math.max(0, Number(e.target.value)))} required />
                         </FormGroup>
 
                         <FormGroup>
                             <Label>Rest Time (seconds)</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                value={restTime}
-                                onChange={e => {
-                                    const value = e.target.value;
-                                    const num = Number.parseInt(value, 10);
-                                    setRestTime(Number.isNaN(num) ? 1 : Math.max(1, num));
-                                }}
-                                required
-                            />
+                            <Input type="number" min="0" value={restTime} onChange={e => setRestTime(Math.max(0, Number(e.target.value)))} required />
                         </FormGroup>
                     </>
                 )}
 
+                {error && <ErrorMessage>{error}</ErrorMessage>}
+
                 <ButtonGroup>
-                    <Button $variant="submit" type="submit">
+                    <Button $variant="submit" type="submit" disabled={error !== null}>
                         Add Timer
                     </Button>
                     <Button type="button" onClick={() => navigate('/')}>

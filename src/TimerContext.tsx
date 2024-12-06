@@ -201,7 +201,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return timers.reduce((total, timer) => {
             switch (timer.type) {
                 case 'stopwatch':
-                    return total + timer.duration;
+                    return total; // Skip stopwatch duration
                 case 'countdown':
                     return total + timer.initialDuration;
                 case 'XY':
