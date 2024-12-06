@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 // Base timer configuration
 interface BaseTimer {
@@ -47,7 +48,7 @@ export type TimerContextType = {
     currentTimerIndex: number | null;
     toggleStartPause: () => void;
     fastForward: () => void;
-    addTimer: (timer: Timer) => void;
+    addTimer: (timer: Omit<Timer, 'id'>) => void;
     removeTimer: (id: string) => void;
     resetTimers: () => void;
     getTotalTime: () => number;
@@ -111,8 +112,36 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return () => clearTimeout(timeoutId);
     }, [currentTimerIndex, timers]);
 
-    const addTimer = (timer: Timer) => {
-        setTimers(prev => [...prev, timer]);
+    const addTimer = (timerData: Omit<Timer, 'id'>) => {
+        if (!('type' in timerData)) {
+            throw new Error('Timer must have a type');
+        }
+
+        const newTimer = {
+            ...timerData,
+            id: uuidv4(),
+        };
+
+        switch (timerData.type) {
+            case 'stopwatch':
+                if (!('duration' in newTimer)) {
+                    (newTimer as StopwatchTimer).duration = 0;
+                }
+                break;
+            case 'countdown':
+                if (!('initialDuration' in newTimer)) {
+                    throw new Error('Countdown timer must have initialDuration');
+                }
+                break;
+            case 'XY':
+            case 'tabata':
+                if (!('rounds' in newTimer) || !('currentRound' in newTimer) || !('workTime' in newTimer) || !('restTime' in newTimer) || !('isWorking' in newTimer)) {
+                    throw new Error(`${timerData.type} timer missing required properties`);
+                }
+                break;
+        }
+
+        setTimers(prev => [...prev, newTimer as Timer]);
     };
 
     const removeTimer = (id: string) => {
