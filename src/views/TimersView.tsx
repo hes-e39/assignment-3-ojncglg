@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useTimerContext } from '../TimerContext';
 import type { Timer } from '../TimerContext';
+import { formatTime } from '../utils/timeUtils';
 
 // ------------------- Styled Components -------------------
 
@@ -131,14 +132,6 @@ const TotalTime = styled.div`
 
 // ------------------- Helper Functions -------------------
 
-const formatTime = (ms: number): string => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    const milliseconds = Math.floor((ms % 1000) / 10);
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
-};
-
 const getTimerDescription = (timer: Timer): string => {
     switch (timer.type) {
         case 'stopwatch':
@@ -146,7 +139,7 @@ const getTimerDescription = (timer: Timer): string => {
         case 'countdown':
             return `Count down from ${formatTime(timer.initialDuration)}`;
         case 'XY':
-            return `${timer.rounds} rounds of ${formatTime(timer.workTime)} work / ${formatTime(timer.restTime)} rest`;
+            return `${timer.rounds} rounds of ${formatTime(timer.workTime)} work`;
         case 'tabata':
             return `${timer.rounds} rounds of ${formatTime(timer.workTime)} work / ${formatTime(timer.restTime)} rest`;
         default:
@@ -172,6 +165,17 @@ const TimersView = () => {
                 return <div>Remaining: {formatTime(timer.duration)}</div>;
 
             case 'XY':
+                return (
+                    <div>
+                        <div>
+                            Round: {timer.currentRound}/{timer.rounds}
+                        </div>
+                        <div>
+                            {timer.isWorking ? 'Work' : 'Rest'}: {formatTime(timer.duration)}
+                        </div>
+                    </div>
+                );
+
             case 'tabata':
                 return (
                     <div>

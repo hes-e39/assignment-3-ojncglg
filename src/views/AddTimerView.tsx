@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { v4 as uuidv4 } from 'uuid';
 import { useTimerContext } from '../TimerContext';
 import type { Timer } from '../TimerContext';
 
-// ------------------- Styled Components -------------------
-
+// Styled components for layout and appearance
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -59,10 +57,11 @@ const Input = styled.input`
   }
 `;
 
+// New styled component for error messages
 const ErrorMessage = styled.div`
   color: #ff4136;
   font-size: 0.9rem;
-  margin-top: -10px;
+  margin-top: 4px;
 `;
 
 const ButtonGroup = styled.div`
@@ -86,94 +85,108 @@ const Button = styled.button<{ $variant?: 'submit' | 'cancel' }>`
   &:hover {
     opacity: 0.8;
   }
-
-  &:disabled {
-    background: #666;
-    cursor: not-allowed;
-  }
 `;
 
-// ------------------- AddTimerView Component -------------------
-
-function AddTimerView() {
+export default function AddTimerView() {
     const navigate = useNavigate();
     const { addTimer } = useTimerContext();
 
-    // Timer state
+    // Basic timer state
     const [type, setType] = useState<Timer['type']>('stopwatch');
-    const [duration, setDuration] = useState<number | ''>(60); // For countdown
-    const [rounds, setRounds] = useState<number>(0); // For XY and Tabata
-    const [workTime, setWorkTime] = useState<number>(0); // For XY and Tabata
-    const [restTime, setRestTime] = useState<number>(0); // For XY and Tabata
-    const [error, setError] = useState<string | null>(null); // Error message state
+    const [duration, setDuration] = useState<number | ''>(60);
+    const [rounds, setRounds] = useState<number | ''>(5);
+    const [workTime, setWorkTime] = useState<number | ''>(30);
+    const [restTime, setRestTime] = useState<number | ''>(10);
 
-    const validateInputs = (): boolean => {
-        if (type === 'XY' || type === 'tabata') {
-            if (rounds <= 0 || workTime <= 0 || restTime <= 0) {
-                setError('Dont be silly, Rounds, Work Time, and Rest Time must be greater than 0.');
-                return false;
-            }
+    // Error state for validation messages
+    const [roundsError, setRoundsError] = useState('');
+    const [workTimeError, setWorkTimeError] = useState('');
+
+    // Validation function for the form
+    const validateForm = (): boolean => {
+        let isValid = true;
+
+        // Validate rounds for XY and Tabata timers
+        if ((type === 'XY' || type === 'tabata') && (typeof rounds !== 'number' || rounds <= 0)) {
+            setRoundsError('Number of rounds must be greater than 0');
+            isValid = false;
         }
-        setError(null);
-        return true;
+
+        // Validate work time for XY and Tabata timers
+        if ((type === 'XY' || type === 'tabata') && (typeof workTime !== 'number' || workTime <= 0)) {
+            setWorkTimeError('Work time must be greater than 0');
+            isValid = false;
+        }
+
+        return isValid;
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!validateInputs()) return;
+        // Clear any existing error messages
+        setRoundsError('');
+        setWorkTimeError('');
 
+        // Validate form before submission
+        if (!validateForm()) {
+            return; // Stop submission if validation fails
+        }
+
+        // Ensure we have valid numbers for our timer
         const finalDuration = typeof duration === 'number' ? duration : 0;
+        const finalRounds = typeof rounds === 'number' ? rounds : 1;
+        const finalWorkTime = typeof workTime === 'number' ? workTime : 30;
+        const finalRestTime = typeof restTime === 'number' ? restTime : 10;
 
         let newTimer: Timer;
 
         switch (type) {
-            case 'stopwatch':
+            case 'stopwatch': {
                 newTimer = {
-                    id: uuidv4(),
                     type: 'stopwatch',
                     duration: 0,
                     status: 'not running',
-                };
+                } as Timer;
                 break;
+            }
 
-            case 'countdown':
+            case 'countdown': {
                 newTimer = {
-                    id: uuidv4(),
                     type: 'countdown',
                     duration: finalDuration * 1000,
                     initialDuration: finalDuration * 1000,
                     status: 'not running',
-                };
+                } as Timer;
                 break;
+            }
 
-            case 'XY':
+            case 'XY': {
                 newTimer = {
-                    id: uuidv4(),
                     type: 'XY',
-                    rounds,
+                    rounds: finalRounds,
                     currentRound: 1,
-                    workTime: workTime * 1000,
-                    restTime: restTime * 1000,
+                    workTime: finalWorkTime * 1000,
                     isWorking: true,
-                    duration: workTime * 1000,
+                    duration: finalWorkTime * 1000,
                     status: 'not running',
-                };
+                } as Timer;
                 break;
+            }
 
-            case 'tabata':
+            case 'tabata': {
                 newTimer = {
-                    id: uuidv4(),
                     type: 'tabata',
-                    rounds,
+                    rounds: finalRounds,
                     currentRound: 1,
-                    workTime: workTime * 1000,
-                    restTime: restTime * 1000,
+                    workTime: finalWorkTime * 1000,
+                    restTime: finalRestTime * 1000,
                     isWorking: true,
-                    duration: workTime * 1000,
+                    duration: finalWorkTime * 1000,
                     status: 'not running',
-                };
+                } as Timer;
                 break;
+            }
         }
 
         addTimer(newTimer);
@@ -197,33 +210,142 @@ function AddTimerView() {
                 {type === 'countdown' && (
                     <FormGroup>
                         <Label>Duration (seconds)</Label>
-                        <Input type="number" min="0" value={duration} onChange={e => setDuration(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))} required />
+                        <Input
+                            type="number"
+                            min="0"
+                            value={duration}
+                            onChange={e => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                    setDuration('');
+                                } else {
+                                    const num = Number.parseInt(value, 10);
+                                    setDuration(Number.isNaN(num) ? 0 : Math.max(0, num));
+                                }
+                            }}
+                            required
+                        />
                     </FormGroup>
                 )}
 
-                {(type === 'XY' || type === 'tabata') && (
+                {type === 'XY' && (
                     <>
                         <FormGroup>
                             <Label>Number of Rounds</Label>
-                            <Input type="number" min="0" value={rounds} onChange={e => setRounds(Math.max(0, Number(e.target.value)))} required />
+                            <Input
+                                type="number"
+                                value={rounds}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                        setRounds('');
+                                        return;
+                                    }
+                                    const num = Number.parseInt(value, 10);
+                                    if (!Number.isNaN(num)) {
+                                        setRounds(num);
+                                        setRoundsError(num <= 0 ? 'Number of rounds must be greater than 0' : '');
+                                    }
+                                }}
+                                required
+                            />
+                            {roundsError && <ErrorMessage>{roundsError}</ErrorMessage>}
                         </FormGroup>
 
                         <FormGroup>
                             <Label>Work Time (seconds)</Label>
-                            <Input type="number" min="0" value={workTime} onChange={e => setWorkTime(Math.max(0, Number(e.target.value)))} required />
-                        </FormGroup>
-
-                        <FormGroup>
-                            <Label>Rest Time (seconds)</Label>
-                            <Input type="number" min="0" value={restTime} onChange={e => setRestTime(Math.max(0, Number(e.target.value)))} required />
+                            <Input
+                                type="number"
+                                value={workTime}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                        setWorkTime('');
+                                        return;
+                                    }
+                                    const num = Number.parseInt(value, 10);
+                                    if (!Number.isNaN(num)) {
+                                        setWorkTime(num);
+                                        setWorkTimeError(num <= 0 ? 'Work time must be greater than 0' : '');
+                                    }
+                                }}
+                                required
+                            />
+                            {workTimeError && <ErrorMessage>{workTimeError}</ErrorMessage>}
                         </FormGroup>
                     </>
                 )}
 
-                {error && <ErrorMessage>{error}</ErrorMessage>}
+                {type === 'tabata' && (
+                    <>
+                        <FormGroup>
+                            <Label>Number of Rounds</Label>
+                            <Input
+                                type="number"
+                                value={rounds}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                        setRounds('');
+                                        return;
+                                    }
+                                    const num = Number.parseInt(value, 10);
+                                    if (!Number.isNaN(num)) {
+                                        setRounds(num);
+                                        setRoundsError(num <= 0 ? 'Number of rounds must be greater than 0' : '');
+                                    }
+                                }}
+                                required
+                            />
+                            {roundsError && <ErrorMessage>{roundsError}</ErrorMessage>}
+                        </FormGroup>
+
+                        <FormGroup>
+                            <Label>Work Time (seconds)</Label>
+                            <Input
+                                type="number"
+                                value={workTime}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                        setWorkTime('');
+                                        return;
+                                    }
+                                    const num = Number.parseInt(value, 10);
+                                    if (!Number.isNaN(num)) {
+                                        setWorkTime(num);
+                                        setWorkTimeError(num <= 0 ? 'Work time must be greater than 0' : '');
+                                    }
+                                }}
+                                required
+                            />
+                            {workTimeError && <ErrorMessage>{workTimeError}</ErrorMessage>}
+                        </FormGroup>
+
+                        <FormGroup>
+                            <Label>Rest Time (seconds)</Label>
+                            <Input
+                                type="number"
+                                value={restTime}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                        setRestTime('');
+                                        return;
+                                    }
+                                    const num = Number.parseInt(value, 10);
+                                    if (!Number.isNaN(num)) {
+                                        setRestTime(Math.max(1, num));
+                                    }
+                                }}
+                                required
+                            />
+                        </FormGroup>
+                    </>
+                )}
 
                 <ButtonGroup>
-                    <Button $variant="submit" type="submit" disabled={error !== null}>
+                    <Button $variant="submit" type="submit">
                         Add Timer
                     </Button>
                     <Button type="button" onClick={() => navigate('/')}>
@@ -234,5 +356,3 @@ function AddTimerView() {
         </Container>
     );
 }
-
-export default AddTimerView;
