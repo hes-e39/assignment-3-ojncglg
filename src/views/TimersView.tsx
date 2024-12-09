@@ -48,6 +48,11 @@ const TimerDisplay = styled.div`
   text-align: center;
   color: #ffd700;
   margin: 10px 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 `;
 
 const TimerInfo = styled.div`
@@ -60,12 +65,14 @@ const TimerInfo = styled.div`
 const TimerTitle = styled.h3`
   color: #ffd700;
   margin: 0;
+  font-family: 'Roboto', sans-serif;
 `;
 
 const TimerStatus = styled.span<{ status: Timer['status'] }>`
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.9rem;
+  font-family: 'Roboto', sans-serif;
   background-color: ${({ status }) => {
       switch (status) {
           case 'running':
@@ -96,6 +103,7 @@ const Button = styled.button`
   color: #000;
   cursor: pointer;
   font-weight: bold;
+  font-family: 'Roboto', sans-serif;
   transition: opacity 0.2s;
 
   &:hover {
@@ -128,6 +136,19 @@ const TotalTime = styled.div`
   font-size: 1.2rem;
   color: #ffd700;
   margin: 20px 0;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Roboto', sans-serif;
+
+  span {
+    font-family: 'Digital-7', monospace;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+  }
 `;
 
 // ------------------- Helper Functions -------------------
@@ -194,7 +215,9 @@ const TimersView = () => {
         <Container>
             <h2>Workout Timers</h2>
 
-            <TotalTime>Total Workout Time: {formatTime(getTotalTime())}</TotalTime>
+            <TotalTime>
+                Total Workout Time: <span>{formatTime(getTotalTime())}</span>
+            </TotalTime>
 
             <TimersList>
                 {timers.map((timer, index) => (
@@ -205,7 +228,7 @@ const TimersView = () => {
 
                         <TimerInfo>
                             <TimerTitle>{timer.type.toUpperCase()}</TimerTitle>
-                            <TimerStatus status={timer.status}>{timer.status.toUpperCase()}</TimerStatus>
+                            <TimerStatus status={timer.status}>{status.toUpperCase()}</TimerStatus>
                         </TimerInfo>
 
                         <TimerDisplay>{renderTimerDetails(timer, index === currentTimerIndex)}</TimerDisplay>
