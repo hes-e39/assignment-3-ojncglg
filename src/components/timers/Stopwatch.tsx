@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useTimerContext } from '../../TimerContext';
 import { formatTime } from '../../utils/timeUtils';
+import TimerDisplay from './TimerDisplay';
 
 // ------------------- Styled Components -------------------
 
@@ -15,21 +16,6 @@ const Container = styled.div`
   border: 2px solid #ffd700;
 `;
 
-const TimeDisplay = styled.div`
-  font-family: "Digital-7", monospace;
-  font-variant-numeric: tabular-nums;
-  font-size: 72px;
-  color: #ffd700;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 20px;
-  border-radius: 8px;
-  min-width: 300px;
-  letter-spacing: 4px;
-  margin: 10px 0;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-`;
-
 const Label = styled.div`
   font-family: 'Roboto', sans-serif;
   font-size: 1.2rem;
@@ -37,28 +23,6 @@ const Label = styled.div`
   text-align: center;
   font-weight: bold;
   text-transform: uppercase;
-`;
-
-const StatusBadge = styled.div<{ status: string }>`
-  font-family: 'Roboto', sans-serif;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  background-color: ${({ status }) => {
-      switch (status) {
-          case 'running':
-              return '#2ecc40';
-          case 'paused':
-              return '#ff851b';
-          case 'completed':
-              return '#ff4136';
-          default:
-              return '#7f8c8d';
-      }
-  }};
-  color: white;
 `;
 
 const TimeInfo = styled.div`
@@ -75,6 +39,8 @@ const TimeInfo = styled.div`
     letter-spacing: 2px;
   }
 `;
+
+// ------------------- Stopwatch Component -------------------
 
 interface StopwatchProps {
     duration: number;
@@ -95,8 +61,7 @@ export default function Stopwatch({ duration, maxDuration, status, isActive = fa
     return (
         <Container role="timer" aria-label="Stopwatch Timer">
             <Label>Stopwatch</Label>
-            <TimeDisplay>{formatTime(Math.min(duration, maxDuration))}</TimeDisplay>
-            <StatusBadge status={status}>{status}</StatusBadge>
+            <TimerDisplay duration={duration} maxDuration={maxDuration} status={status} />
             {isActive && (
                 <TimeInfo role="status" aria-live="polite">
                     {duration < maxDuration ? (

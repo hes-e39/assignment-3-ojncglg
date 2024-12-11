@@ -2,7 +2,8 @@ import styled from 'styled-components';
 import { useTimerContext } from '../../TimerContext';
 import type { Timer } from '../../TimerContext';
 import { formatTime } from '../../utils/timeUtils';
-import { Container, InfoBox, Label, StatusBadge, TimeDisplay } from '../SharedStyles';
+import { Container, InfoBox, Label } from '../SharedStyles';
+import TimerDisplay from './TimerDisplay';
 
 // ------------------- Styled Components -------------------
 
@@ -34,7 +35,7 @@ const ProgressLabel = styled.div`
   margin-bottom: 5px;
 `;
 
-// ------------------- Component Interface -------------------
+// ------------------- Countdown Component -------------------
 
 interface CountdownProps {
     duration: number;
@@ -42,8 +43,6 @@ interface CountdownProps {
     status: Timer['status'];
     isActive?: boolean;
 }
-
-// ------------------- Countdown Component -------------------
 
 export default function Countdown({ duration, initialDuration, status, isActive = false }: CountdownProps) {
     const { fastForward } = useTimerContext();
@@ -76,8 +75,7 @@ export default function Countdown({ duration, initialDuration, status, isActive 
     return (
         <Container role="timer" aria-label="Countdown Timer">
             <Label>COUNTDOWN</Label>
-            <TimeDisplay>{formatTime(duration)}</TimeDisplay>
-            <StatusBadge status={status}>{status}</StatusBadge>
+            <TimerDisplay duration={duration} maxDuration={initialDuration} status={status} />
             {renderProgressBar()}
             {renderTimeInfo()}
         </Container>
