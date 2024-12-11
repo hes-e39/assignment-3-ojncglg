@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { useTimerContext } from '../TimerContext';
-import type { Timer } from '../TimerContext';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTimerContext } from "../TimerContext";
+import styled from "styled-components";
+import type { Timer } from "../TimerContext";
 
-// Styled components for layout and appearance
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -31,6 +30,7 @@ const FormGroup = styled.div`
 const Label = styled.label`
   color: #ffd700;
   font-size: 1.1rem;
+  font-family: 'Roboto', sans-serif;
 `;
 
 const Select = styled.select`
@@ -40,6 +40,7 @@ const Select = styled.select`
   background: #000;
   color: #ffd700;
   font-size: 1rem;
+  font-family: 'Roboto', sans-serif;
 `;
 
 const Input = styled.input`
@@ -49,19 +50,13 @@ const Input = styled.input`
   background: #000;
   color: #ffd700;
   font-size: 1rem;
+  font-family: 'Roboto', sans-serif;
 
   &::-webkit-inner-spin-button,
   &::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-`;
-
-// New styled component for error messages
-const ErrorMessage = styled.div`
-  color: #ff4136;
-  font-size: 0.9rem;
-  margin-top: 4px;
 `;
 
 const ButtonGroup = styled.div`
@@ -75,11 +70,12 @@ const Button = styled.button<{ $variant?: 'submit' | 'cancel' }>`
   padding: 12px 24px;
   border-radius: 5px;
   border: none;
-  background: ${props => (props.$variant === 'submit' ? '#ffd700' : '#666')};
-  color: ${props => (props.$variant === 'submit' ? '#000' : '#fff')};
+  background: ${props => props.$variant === 'submit' ? '#ffd700' : '#666'};
+  color: ${props => props.$variant === 'submit' ? '#000' : '#fff'};
   cursor: pointer;
   font-size: 1rem;
   font-weight: bold;
+  font-family: 'Roboto', sans-serif;
   transition: opacity 0.2s;
 
   &:hover {
@@ -88,271 +84,223 @@ const Button = styled.button<{ $variant?: 'submit' | 'cancel' }>`
 `;
 
 export default function AddTimerView() {
-    const navigate = useNavigate();
-    const { addTimer } = useTimerContext();
+  const navigate = useNavigate();
+  const { addTimer } = useTimerContext();
 
-    // Basic timer state
-    const [type, setType] = useState<Timer['type']>('stopwatch');
-    const [duration, setDuration] = useState<number | ''>(60);
-    const [rounds, setRounds] = useState<number | ''>(5);
-    const [workTime, setWorkTime] = useState<number | ''>(30);
-    const [restTime, setRestTime] = useState<number | ''>(10);
+  const [type, setType] = useState<Timer["type"]>("stopwatch");
+  const [duration, setDuration] = useState<number | ''>(60);
+  const [maxTime, setMaxTime] = useState<number | ''>(150);
+  const [rounds, setRounds] = useState(5);
+  const [workTime, setWorkTime] = useState(30);
+  const [restTime, setRestTime] = useState(10);
 
-    // Error state for validation messages
-    const [roundsError, setRoundsError] = useState('');
-    const [workTimeError, setWorkTimeError] = useState('');
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalDuration = typeof duration === 'number' ? duration : 0;
+    const finalMaxTime = typeof maxTime === 'number' ? maxTime : 150;
 
-    // Validation function for the form
-    const validateForm = (): boolean => {
-        let isValid = true;
+    let newTimer: Timer;
 
-        // Validate rounds for XY and Tabata timers
-        if ((type === 'XY' || type === 'tabata') && (typeof rounds !== 'number' || rounds <= 0)) {
-            setRoundsError('Number of rounds must be greater than 0');
-            isValid = false;
-        }
+    switch (type) {
+      case "stopwatch": {
+        newTimer = {
+          type: "stopwatch",
+          duration: 0,
+          maxDuration: finalMaxTime * 1000,  // Convert to milliseconds
+          status: "not running"
+        } as Timer;
+        break;
+      }
 
-        // Validate work time for XY and Tabata timers
-        if ((type === 'XY' || type === 'tabata') && (typeof workTime !== 'number' || workTime <= 0)) {
-            setWorkTimeError('Work time must be greater than 0');
-            isValid = false;
-        }
+      case "countdown": {
+        newTimer = {
+          type: "countdown",
+          duration: finalDuration * 1000,
+          initialDuration: finalDuration * 1000,
+          status: "not running"
+        } as Timer;
+        break;
+      }
 
-        return isValid;
-    };
+      case "XY": {
+        newTimer = {
+          type: "XY",
+          rounds: rounds,
+          currentRound: 1,
+          workTime: workTime * 1000,
+          isWorking: true,
+          duration: workTime * 1000,
+          status: "not running"
+        } as Timer;
+        break;
+      }
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+      case "tabata": {
+        newTimer = {
+          type: "tabata",
+          rounds: rounds,
+          currentRound: 1,
+          workTime: workTime * 1000,
+          restTime: restTime * 1000,
+          isWorking: true,
+          duration: workTime * 1000,
+          status: "not running"
+        } as Timer;
+        break;
+      }
+    }
 
-        // Clear any existing error messages
-        setRoundsError('');
-        setWorkTimeError('');
+    addTimer(newTimer);
+    navigate("/");
+  };
 
-        // Validate form before submission
-        if (!validateForm()) {
-            return; // Stop submission if validation fails
-        }
+  return (
+    <Container>
+      <h2>Add New Timer</h2>
+      <Form onSubmit={handleSubmit}>
+        <FormGroup>
+          <Label>Timer Type</Label>
+          <Select 
+            value={type} 
+            onChange={(e) => setType(e.target.value as Timer["type"])}
+          >
+            <option value="stopwatch">Stopwatch</option>
+            <option value="countdown">Countdown</option>
+            <option value="XY">XY</option>
+            <option value="tabata">Tabata</option>
+          </Select>
+        </FormGroup>
 
-        // Ensure we have valid numbers for our timer
-        const finalDuration = typeof duration === 'number' ? duration : 0;
-        const finalRounds = typeof rounds === 'number' ? rounds : 1;
-        const finalWorkTime = typeof workTime === 'number' ? workTime : 30;
-        const finalRestTime = typeof restTime === 'number' ? restTime : 10;
+        {type === "stopwatch" && (
+          <FormGroup>
+            <Label>Maximum Time (seconds)</Label>
+            <Input
+              type="number"
+              min="1"
+              value={maxTime}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '') {
+                  setMaxTime('');
+                } else {
+                  const num = Number.parseInt(value, 10);
+                  setMaxTime(Number.isNaN(num) ? 0 : Math.max(1, num));
+                }
+              }}
+              required
+            />
+          </FormGroup>
+        )}
 
-        let newTimer: Timer;
+        {type === "countdown" && (
+          <FormGroup>
+            <Label>Duration (seconds)</Label>
+            <Input
+              type="number"
+              min="0"
+              value={duration}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '') {
+                  setDuration('');
+                } else {
+                  const num = Number.parseInt(value, 10);
+                  setDuration(Number.isNaN(num) ? 0 : Math.max(0, num));
+                }
+              }}
+              required
+            />
+          </FormGroup>
+        )}
 
-        switch (type) {
-            case 'stopwatch': {
-                newTimer = {
-                    type: 'stopwatch',
-                    duration: 0,
-                    status: 'not running',
-                } as Timer;
-                break;
-            }
+        {type === "XY" && (
+          <>
+            <FormGroup>
+              <Label>Number of Rounds</Label>
+              <Input
+                type="number"
+                min="1"
+                value={rounds}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const num = Number.parseInt(value, 10);
+                  setRounds(Number.isNaN(num) ? 1 : Math.max(1, num));
+                }}
+                required
+              />
+            </FormGroup>
 
-            case 'countdown': {
-                newTimer = {
-                    type: 'countdown',
-                    duration: finalDuration * 1000,
-                    initialDuration: finalDuration * 1000,
-                    status: 'not running',
-                } as Timer;
-                break;
-            }
+            <FormGroup>
+              <Label>Work Time (seconds)</Label>
+              <Input
+                type="number"
+                min="1"
+                value={workTime}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const num = Number.parseInt(value, 10);
+                  setWorkTime(Number.isNaN(num) ? 1 : Math.max(1, num));
+                }}
+                required
+              />
+            </FormGroup>
+          </>
+        )}
 
-            case 'XY': {
-                newTimer = {
-                    type: 'XY',
-                    rounds: finalRounds,
-                    currentRound: 1,
-                    workTime: finalWorkTime * 1000,
-                    isWorking: true,
-                    duration: finalWorkTime * 1000,
-                    status: 'not running',
-                } as Timer;
-                break;
-            }
+        {type === "tabata" && (
+          <>
+            <FormGroup>
+              <Label>Number of Rounds</Label>
+              <Input
+                type="number"
+                min="1"
+                value={rounds}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const num = Number.parseInt(value, 10);
+                  setRounds(Number.isNaN(num) ? 1 : Math.max(1, num));
+                }}
+                required
+              />
+            </FormGroup>
 
-            case 'tabata': {
-                newTimer = {
-                    type: 'tabata',
-                    rounds: finalRounds,
-                    currentRound: 1,
-                    workTime: finalWorkTime * 1000,
-                    restTime: finalRestTime * 1000,
-                    isWorking: true,
-                    duration: finalWorkTime * 1000,
-                    status: 'not running',
-                } as Timer;
-                break;
-            }
-        }
+            <FormGroup>
+              <Label>Work Time (seconds)</Label>
+              <Input
+                type="number"
+                min="1"
+                value={workTime}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const num = Number.parseInt(value, 10);
+                  setWorkTime(Number.isNaN(num) ? 1 : Math.max(1, num));
+                }}
+                required
+              />
+            </FormGroup>
 
-        addTimer(newTimer);
-        navigate('/');
-    };
+            <FormGroup>
+              <Label>Rest Time (seconds)</Label>
+              <Input
+                type="number"
+                min="1"
+                value={restTime}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const num = Number.parseInt(value, 10);
+                  setRestTime(Number.isNaN(num) ? 1 : Math.max(1, num));
+                }}
+                required
+              />
+            </FormGroup>
+          </>
+        )}
 
-    return (
-        <Container>
-            <h2>Add New Timer</h2>
-            <Form onSubmit={handleSubmit}>
-                <FormGroup>
-                    <Label>Timer Type</Label>
-                    <Select value={type} onChange={e => setType(e.target.value as Timer['type'])}>
-                        <option value="stopwatch">Stopwatch</option>
-                        <option value="countdown">Countdown</option>
-                        <option value="XY">XY</option>
-                        <option value="tabata">Tabata</option>
-                    </Select>
-                </FormGroup>
-
-                {type === 'countdown' && (
-                    <FormGroup>
-                        <Label>Duration (seconds)</Label>
-                        <Input
-                            type="number"
-                            min="0"
-                            value={duration}
-                            onChange={e => {
-                                const value = e.target.value;
-                                if (value === '') {
-                                    setDuration('');
-                                } else {
-                                    const num = Number.parseInt(value, 10);
-                                    setDuration(Number.isNaN(num) ? 0 : Math.max(0, num));
-                                }
-                            }}
-                            required
-                        />
-                    </FormGroup>
-                )}
-
-                {type === 'XY' && (
-                    <>
-                        <FormGroup>
-                            <Label>Number of Rounds</Label>
-                            <Input
-                                type="number"
-                                value={rounds}
-                                onChange={e => {
-                                    const value = e.target.value;
-                                    if (value === '') {
-                                        setRounds('');
-                                        return;
-                                    }
-                                    const num = Number.parseInt(value, 10);
-                                    if (!Number.isNaN(num)) {
-                                        setRounds(num);
-                                        setRoundsError(num <= 0 ? 'Number of rounds must be greater than 0' : '');
-                                    }
-                                }}
-                                required
-                            />
-                            {roundsError && <ErrorMessage>{roundsError}</ErrorMessage>}
-                        </FormGroup>
-
-                        <FormGroup>
-                            <Label>Work Time (seconds)</Label>
-                            <Input
-                                type="number"
-                                value={workTime}
-                                onChange={e => {
-                                    const value = e.target.value;
-                                    if (value === '') {
-                                        setWorkTime('');
-                                        return;
-                                    }
-                                    const num = Number.parseInt(value, 10);
-                                    if (!Number.isNaN(num)) {
-                                        setWorkTime(num);
-                                        setWorkTimeError(num <= 0 ? 'Work time must be greater than 0' : '');
-                                    }
-                                }}
-                                required
-                            />
-                            {workTimeError && <ErrorMessage>{workTimeError}</ErrorMessage>}
-                        </FormGroup>
-                    </>
-                )}
-
-                {type === 'tabata' && (
-                    <>
-                        <FormGroup>
-                            <Label>Number of Rounds</Label>
-                            <Input
-                                type="number"
-                                value={rounds}
-                                onChange={e => {
-                                    const value = e.target.value;
-                                    if (value === '') {
-                                        setRounds('');
-                                        return;
-                                    }
-                                    const num = Number.parseInt(value, 10);
-                                    if (!Number.isNaN(num)) {
-                                        setRounds(num);
-                                        setRoundsError(num <= 0 ? 'Number of rounds must be greater than 0' : '');
-                                    }
-                                }}
-                                required
-                            />
-                            {roundsError && <ErrorMessage>{roundsError}</ErrorMessage>}
-                        </FormGroup>
-
-                        <FormGroup>
-                            <Label>Work Time (seconds)</Label>
-                            <Input
-                                type="number"
-                                value={workTime}
-                                onChange={e => {
-                                    const value = e.target.value;
-                                    if (value === '') {
-                                        setWorkTime('');
-                                        return;
-                                    }
-                                    const num = Number.parseInt(value, 10);
-                                    if (!Number.isNaN(num)) {
-                                        setWorkTime(num);
-                                        setWorkTimeError(num <= 0 ? 'Work time must be greater than 0' : '');
-                                    }
-                                }}
-                                required
-                            />
-                            {workTimeError && <ErrorMessage>{workTimeError}</ErrorMessage>}
-                        </FormGroup>
-
-                        <FormGroup>
-                            <Label>Rest Time (seconds)</Label>
-                            <Input
-                                type="number"
-                                value={restTime}
-                                onChange={e => {
-                                    const value = e.target.value;
-                                    if (value === '') {
-                                        setRestTime('');
-                                        return;
-                                    }
-                                    const num = Number.parseInt(value, 10);
-                                    if (!Number.isNaN(num)) {
-                                        setRestTime(Math.max(1, num));
-                                    }
-                                }}
-                                required
-                            />
-                        </FormGroup>
-                    </>
-                )}
-
-                <ButtonGroup>
-                    <Button $variant="submit" type="submit">
-                        Add Timer
-                    </Button>
-                    <Button type="button" onClick={() => navigate('/')}>
-                        Cancel
-                    </Button>
-                </ButtonGroup>
-            </Form>
-        </Container>
-    );
+        <ButtonGroup>
+          <Button $variant="submit" type="submit">Add Timer</Button>
+          <Button type="button" onClick={() => navigate("/")}>Cancel</Button>
+        </ButtonGroup>
+      </Form>
+    </Container>
+  );
 }

@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 import { useTimerContext } from '../../TimerContext';
 import { formatTime } from '../../utils/timeUtils';
-import { TIMER_CONFIG } from '../../utils/timerConfig';
 
 // ------------------- Styled Components -------------------
 
@@ -16,7 +15,6 @@ const Container = styled.div`
   border: 2px solid #ffd700;
 `;
 
-// Digital font only for the time display
 const TimeDisplay = styled.div`
   font-family: "Digital-7", monospace;
   font-variant-numeric: tabular-nums;
@@ -32,7 +30,6 @@ const TimeDisplay = styled.div`
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 `;
 
-// Regular font for labels and text
 const Label = styled.div`
   font-family: 'Roboto', sans-serif;
   font-size: 1.2rem;
@@ -40,7 +37,6 @@ const Label = styled.div`
   text-align: center;
   font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 1px;
 `;
 
 const StatusBadge = styled.div<{ status: string }>`
@@ -73,35 +69,25 @@ const TimeInfo = styled.div`
   margin-top: 10px;
 
   span {
-    font-family: inherit;
-  }
-
-  .time-value {
     font-family: "Digital-7", monospace;
     font-variant-numeric: tabular-nums;
     font-size: 1.2em;
     letter-spacing: 2px;
-    text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
   }
 `;
 
-// ------------------- Component Interface -------------------
-
 interface StopwatchProps {
     duration: number;
+    maxDuration: number;
     status: 'not running' | 'running' | 'paused' | 'completed';
     isActive?: boolean;
 }
 
-// ------------------- Stopwatch Component -------------------
-
-export default function Stopwatch({ duration, status, isActive = false }: StopwatchProps) {
+export default function Stopwatch({ duration, maxDuration, status, isActive = false }: StopwatchProps) {
     const { fastForward } = useTimerContext();
 
-    // Check if the stopwatch has reached its maximum time
-    const isMaxTimeReached = duration >= TIMER_CONFIG.STOPWATCH_MAX_TIME;
+    const isMaxTimeReached = duration >= maxDuration;
 
-    // Handle stopping at max time
     if (isMaxTimeReached && status === 'running') {
         fastForward();
     }
@@ -109,13 +95,13 @@ export default function Stopwatch({ duration, status, isActive = false }: Stopwa
     return (
         <Container role="timer" aria-label="Stopwatch Timer">
             <Label>Stopwatch</Label>
-            <TimeDisplay>{formatTime(Math.min(duration, TIMER_CONFIG.STOPWATCH_MAX_TIME))}</TimeDisplay>
+            <TimeDisplay>{formatTime(Math.min(duration, maxDuration))}</TimeDisplay>
             <StatusBadge status={status}>{status}</StatusBadge>
             {isActive && (
                 <TimeInfo role="status" aria-live="polite">
-                    {duration < TIMER_CONFIG.STOPWATCH_MAX_TIME ? (
+                    {duration < maxDuration ? (
                         <span>
-                            Time until max: <span className="time-value">{formatTime(TIMER_CONFIG.STOPWATCH_MAX_TIME - duration)}</span>
+                            Time until max: <span>{formatTime(maxDuration - duration)}</span>
                         </span>
                     ) : (
                         <span>Maximum time reached</span>

@@ -63,16 +63,16 @@ const TimerInfo = styled.div`
 `;
 
 const TimerTitle = styled.h3`
+  font-family: 'Roboto', sans-serif;
   color: #ffd700;
   margin: 0;
-  font-family: 'Roboto', sans-serif;
 `;
 
 const TimerStatus = styled.span<{ status: Timer['status'] }>`
+  font-family: 'Roboto', sans-serif;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.9rem;
-  font-family: 'Roboto', sans-serif;
   background-color: ${({ status }) => {
       switch (status) {
           case 'running':
@@ -156,7 +156,7 @@ const TotalTime = styled.div`
 const getTimerDescription = (timer: Timer): string => {
     switch (timer.type) {
         case 'stopwatch':
-            return 'Count up to 2:30';
+            return `Count up to ${formatTime(timer.maxDuration)}`;
         case 'countdown':
             return `Count down from ${formatTime(timer.initialDuration)}`;
         case 'XY':
@@ -180,7 +180,7 @@ const TimersView = () => {
 
         switch (timer.type) {
             case 'stopwatch':
-                return <div>Time: {formatTime(timer.duration)}</div>;
+                return <div>Time: {formatTime(Math.min(timer.duration, timer.maxDuration))}</div>;
 
             case 'countdown':
                 return <div>Remaining: {formatTime(timer.duration)}</div>;
@@ -228,7 +228,7 @@ const TimersView = () => {
 
                         <TimerInfo>
                             <TimerTitle>{timer.type.toUpperCase()}</TimerTitle>
-                            <TimerStatus status={timer.status}>{status.toUpperCase()}</TimerStatus>
+                            <TimerStatus status={timer.status}>{timer.status.toUpperCase()}</TimerStatus>
                         </TimerInfo>
 
                         <TimerDisplay>{renderTimerDetails(timer, index === currentTimerIndex)}</TimerDisplay>
