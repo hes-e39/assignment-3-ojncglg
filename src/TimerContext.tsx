@@ -7,6 +7,7 @@ interface BaseTimer {
     id: string;
     type: 'stopwatch' | 'countdown' | 'XY' | 'tabata';
     status: 'not running' | 'running' | 'paused' | 'completed';
+    description: string; // Added description property
 }
 
 // Specific timer configurations
@@ -88,7 +89,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
                 switch (timer.type) {
                     case 'stopwatch': {
-                        const newDuration = Math.round(elapsedTime);
+                        const newDuration = timer.duration + actualElapsed;
                         timer.duration = Math.min(newDuration, timer.maxDuration);
                         if (timer.duration >= timer.maxDuration) {
                             timer.status = 'completed';
