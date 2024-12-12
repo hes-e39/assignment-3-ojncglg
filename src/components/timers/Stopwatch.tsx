@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useTimerContext } from '../../TimerContext';
 import { formatTime } from '../../utils/timeUtils';
+import { TIMER_CONFIG } from '../../timerConfig';
 import TimerDisplay from './TimerDisplay';
 
 // ------------------- Styled Components -------------------
@@ -49,10 +50,10 @@ interface StopwatchProps {
     isActive?: boolean;
 }
 
-export default function Stopwatch({ duration, maxDuration, status, isActive = false }: StopwatchProps) {
+export default function Stopwatch({ duration, maxDuration = TIMER_CONFIG.STOPWATCH_MAX_TIME, status, isActive = false }: StopwatchProps) {
     const { fastForward } = useTimerContext();
 
-    const isMaxTimeReached = duration >= maxDuration;
+    const isMaxTimeReached = duration >= TIMER_CONFIG.STOPWATCH_MAX_TIME;
 
     if (isMaxTimeReached && status === 'running') {
         fastForward();

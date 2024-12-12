@@ -11,7 +11,6 @@ interface XYProps {
     currentRound: number;
     rounds: number;
     workTime: number;
-    restTime: number;
     isWorking: boolean;
     status: Timer['status'];
     isActive?: boolean;
@@ -19,7 +18,7 @@ interface XYProps {
 
 // ------------------- XY Timer Component -------------------
 
-export default function XY({ duration, currentRound, rounds, workTime, restTime, isWorking, status, isActive = false }: XYProps) {
+export default function XY({ duration, currentRound, rounds, workTime, isWorking, status, isActive = false }: XYProps) {
     const { fastForward } = useTimerContext();
 
     if (duration <= 0 && status === 'running') {
@@ -38,14 +37,14 @@ export default function XY({ duration, currentRound, rounds, workTime, restTime,
                     duration={duration}
                     isWorking={isWorking}
                     workTime={workTime}
-                    restTime={restTime}
+                    restTime={0}
                 />
             ) : (
                 <TimerSummary 
                     rounds={rounds} 
                     workTime={workTime} 
-                    restTime={restTime} 
-                    totalTime={(workTime + restTime) * rounds} 
+                    restTime={0}
+                    totalTime={workTime * rounds} 
                 />
             )}
         </Container>

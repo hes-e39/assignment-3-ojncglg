@@ -23,7 +23,7 @@ export default function Tabata({ duration, currentRound, rounds, workTime, restT
 
     // Calculate remaining time for the entire workout
     const remainingRounds = rounds - currentRound + 1;
-    const remainingTime = duration + (remainingRounds - 1) * (workTime + restTime) + (isWorking ? restTime : 0);
+    const remainingTime = duration + (remainingRounds - 1) * (workTime + restTime) + (isWorking ? restTime : workTime);
 
     if (duration <= 0 && status === 'running') {
         fastForward();

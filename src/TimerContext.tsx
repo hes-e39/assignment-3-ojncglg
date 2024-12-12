@@ -1,14 +1,13 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { saveTimerConfig, saveTimerState, loadTimerConfig, loadTimerState } from './utils/storage';
 
 // Base timer configuration
 interface BaseTimer {
     id: string;
     type: 'stopwatch' | 'countdown' | 'XY' | 'tabata';
     status: 'not running' | 'running' | 'paused' | 'completed';
-    description: string; // Added description property
+    description: string;
 }
 
 // Specific timer configurations
@@ -31,6 +30,7 @@ export interface XYTimer extends BaseTimer {
     workTime: number;
     isWorking: boolean;
     duration: number;
+    restTime?: never; // Explicitly mark as never to prevent usage
 }
 
 export interface TabataTimer extends BaseTimer {
@@ -59,21 +59,91 @@ export type TimerContextType = {
 export const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [timers, setTimers] = useState<Timer[]>(loadTimerConfig() || []);
+    const [timers, setTimers] = useState<Timer[]>([]);
     const [currentTimerIndex, setCurrentTimerIndex] = useState<number | null>(null);
 
     useEffect(() => {
-        const savedState = loadTimerState();
-        if (savedState) {
-            setCurrentTimerIndex(savedState.currentTimerIndex);
-            setTimers(savedState.timers);
-        }
-    }, []);
+        if (typeof currentTimerIndex !== 'number' || currentTimerIndex >= timers.length) return;
 
-    useEffect(() => {
-        saveTimerConfig(timers);
-        saveTimerState({ currentTimerIndex, timers });
-    }, [timers, currentTimerIndex]);
+        const index = currentTimerIndex;
+        const currentTimer = timers[index];
+        if (currentTimer.status !== 'running') return;
+
+        let lastUpdateTime = performance.now();
+        let animationFrameId: number | null = null;
+
+        function updateTimer(currentTime: number) {
+            const deltaTime = currentTime - lastUpdateTime;
+            lastUpdateTime = currentTime;
+            
+            setTimers(prevTimers => {
+                if (index >= prevTimers.length) return prevTimers;
+                
+                const updatedTimers = [...prevTimers];
+                const timer = updatedTimers[index];
+
+                switch (timer.type) {
+                    case 'stopwatch': {
+                        if (timer.status === 'running') {
+                            const newDuration = timer.duration + deltaTime;
+                            timer.duration = Math.min(newDuration, timer.maxDuration);
+                            if (timer.duration >= timer.maxDuration) {
+                                timer.status = 'completed';
+                            }
+                        }
+                        break;
+                    }
+                    case 'countdown': {
+                        if (timer.status === 'running') {
+                            const newDuration = Math.max(0, timer.duration - deltaTime);
+                            timer.duration = newDuration;
+                            if (timer.duration === 0) {
+                                timer.status = 'completed';
+                            }
+                        }
+                        break;
+                    }
+                    case 'XY':
+                    case 'tabata': {
+                        if (timer.status === 'running') {
+                            const newDuration = Math.max(0, timer.duration - deltaTime);
+                            if (newDuration === 0) {
+                                if (timer.isWorking) {
+                                    timer.isWorking = false;
+                                    timer.duration = timer.type === 'tabata' ? timer.restTime : 0;
+                                } else {
+                                    timer.currentRound++;
+                                    if (timer.currentRound > timer.rounds) {
+                                        timer.status = 'completed';
+                                    } else {
+                                        timer.isWorking = true;
+                                        timer.duration = timer.workTime;
+                                    }
+                                }
+                            } else {
+                                timer.duration = newDuration;
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                return updatedTimers;
+            });
+
+            if (timers[index]?.status === 'running') {
+                animationFrameId = window.requestAnimationFrame(updateTimer);
+            }
+        }
+
+        animationFrameId = window.requestAnimationFrame(updateTimer);
+
+        return () => {
+            if (animationFrameId) {
+                window.cancelAnimationFrame(animationFrameId);
+            }
+        };
+    }, [currentTimerIndex, timers]);
 
     const addTimer = (timerData: Omit<Timer, 'id'>) => {
         const newTimer = {
@@ -147,7 +217,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 case 'countdown':
                     return total + timer.initialDuration;
                 case 'XY':
-                    return total + timer.workTime * timer.rounds;
+                    return total + (timer.workTime) * timer.rounds * 2;
                 case 'tabata':
                     return total + (timer.workTime + timer.restTime) * timer.rounds;
             }

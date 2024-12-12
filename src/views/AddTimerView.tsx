@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTimerContext } from "../TimerContext";
 import styled from "styled-components";
 import type { Timer } from "../TimerContext";
+import { TIMER_CONFIG } from "../timerConfig";
 
 const Container = styled.div`
   display: flex;
@@ -89,7 +90,7 @@ export default function AddTimerView() {
 
   const [type, setType] = useState<Timer["type"]>("stopwatch");
   const [duration, setDuration] = useState<number | ''>(60);
-  const [maxTime, setMaxTime] = useState<number | ''>(150);
+  const [maxTime, setMaxTime] = useState<number | ''>(TIMER_CONFIG.STOPWATCH_MAX_TIME / 1000); // Convert from ms to seconds
   const [rounds, setRounds] = useState(5);
   const [workTime, setWorkTime] = useState(30);
   const [restTime, setRestTime] = useState(10);
@@ -97,8 +98,6 @@ export default function AddTimerView() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalDuration = typeof duration === 'number' ? duration : 0;
-    const finalMaxTime = typeof maxTime === 'number' ? maxTime : 150;
-
     let newTimer: Timer;
 
     switch (type) {
@@ -106,7 +105,7 @@ export default function AddTimerView() {
         newTimer = {
           type: "stopwatch",
           duration: 0,
-          maxDuration: finalMaxTime * 1000,  // Convert to milliseconds
+          maxDuration: TIMER_CONFIG.STOPWATCH_MAX_TIME,
           status: "not running"
         } as Timer;
         break;
