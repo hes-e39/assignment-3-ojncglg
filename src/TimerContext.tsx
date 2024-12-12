@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { saveTimerConfig, saveTimerState, loadTimerConfig, loadTimerState } from './utils/storage';
 
 // Base timer configuration
 interface BaseTimer {
@@ -58,96 +59,21 @@ export type TimerContextType = {
 export const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [timers, setTimers] = useState<Timer[]>([]);
+    const [timers, setTimers] = useState<Timer[]>(loadTimerConfig() || []);
     const [currentTimerIndex, setCurrentTimerIndex] = useState<number | null>(null);
 
     useEffect(() => {
-        if (typeof currentTimerIndex !== 'number' || currentTimerIndex >= timers.length) return;
-
-        const index = currentTimerIndex;
-        const currentTimer = timers[index];
-        if (currentTimer.status !== 'running') return;
-
-        const startTime = performance.now();
-        let expectedTime = startTime;
-        let animationFrameId: number | null = null;
-
-        function updateTimer(currentTime: number) {
-            // Calculate the time that should have elapsed
-            const elapsedTime = currentTime - startTime;
-            
-            // Update timer state
-            setTimers(prevTimers => {
-                if (index >= prevTimers.length) return prevTimers;
-                
-                const updatedTimers = [...prevTimers];
-                const timer = updatedTimers[index];
-
-                // Calculate actual time change since last update
-                const actualElapsed = Math.round(currentTime - expectedTime);
-                expectedTime = currentTime;
-
-                switch (timer.type) {
-                    case 'stopwatch': {
-                        const newDuration = timer.duration + actualElapsed;
-                        timer.duration = Math.min(newDuration, timer.maxDuration);
-                        if (timer.duration >= timer.maxDuration) {
-                            timer.status = 'completed';
-                        }
-                        break;
-                    }
-
-                    case 'countdown': {
-                        const newDuration = Math.max(0, timer.initialDuration - Math.round(elapsedTime));
-                        timer.duration = newDuration;
-                        if (timer.duration === 0) {
-                            timer.status = 'completed';
-                        }
-                        break;
-                    }
-
-                    case 'XY':
-                    case 'tabata': {
-                        const newDuration = Math.max(0, timer.duration - actualElapsed);
-                        if (newDuration === 0) {
-                            if (timer.isWorking) {
-                                timer.isWorking = false;
-                                timer.duration = timer.type === 'tabata' ? timer.restTime : timer.workTime;
-                            } else {
-                                timer.currentRound++;
-                                if (timer.currentRound > timer.rounds) {
-                                    timer.status = 'completed';
-                                } else {
-                                    timer.isWorking = true;
-                                    timer.duration = timer.workTime;
-                                }
-                            }
-                        } else {
-                            timer.duration = newDuration;
-                        }
-                        break;
-                    }
-                }
-
-                return updatedTimers;
-            });
-
-            // Schedule next update if timer is still running
-            if (timers[index]?.status === 'running') {
-                animationFrameId = window.requestAnimationFrame(updateTimer);
-            }
+        const savedState = loadTimerState();
+        if (savedState) {
+            setCurrentTimerIndex(savedState.currentTimerIndex);
+            setTimers(savedState.timers);
         }
+    }, []);
 
-        // Start the animation frame loop
-        animationFrameId = window.requestAnimationFrame(updateTimer);
-
-        // Cleanup function
-        return () => {
-            if (animationFrameId) {
-                window.cancelAnimationFrame(animationFrameId);
-            }
-        };
-    }, [currentTimerIndex, timers]);
+    useEffect(() => {
+        saveTimerConfig(timers);
+        saveTimerState({ currentTimerIndex, timers });
+    }, [timers, currentTimerIndex]);
 
     const addTimer = (timerData: Omit<Timer, 'id'>) => {
         const newTimer = {
