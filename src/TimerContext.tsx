@@ -58,6 +58,7 @@ export type TimerContextType = {
     getTotalTime: () => number;
     saveToUrl: () => void;
     updateTimer: (id: string, timer: Partial<Timer>) => void;
+    moveTimer: (id: string, direction: 'up' | 'down') => void;
 };
 
 export const TimerContext = createContext<TimerContextType | undefined>(undefined);
@@ -249,6 +250,20 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         updateUrlWithState({ timers });
     };
 
+    const moveTimer = (id: string, direction: 'up' | 'down') => {
+        setTimers(prev => {
+            const index = prev.findIndex(timer => timer.id === id);
+            if (index === -1) return prev;
+            
+            const newIndex = direction === 'up' ? index - 1 : index + 1;
+            if (newIndex < 0 || newIndex >= prev.length) return prev;
+            
+            const newTimers = [...prev];
+            [newTimers[index], newTimers[newIndex]] = [newTimers[newIndex], newTimers[index]];
+            return newTimers;
+        });
+    };
+
     const updateTimer = (id: string, updates: Partial<Timer>) => {
         setTimers(prev => prev.map(timer => {
             if (timer.id !== id) return timer;
@@ -316,6 +331,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 getTotalTime,
                 saveToUrl,
                 updateTimer,
+                moveTimer,
             }}
         >
             {children}

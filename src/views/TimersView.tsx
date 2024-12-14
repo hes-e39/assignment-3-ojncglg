@@ -198,6 +198,26 @@ const Notification = styled.div`
   }
 `;
 
+const MoveButton = styled(Button)`
+  padding: 12px 20px;
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.disabled ? '#666' : '#ffd700'};
+  color: #000;
+  
+  &:hover:not(:disabled) {
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+`;
+
 const RemoveButton = styled.button`
   position: absolute;
   top: 10px;
@@ -253,7 +273,7 @@ const getTimerDescription = (timer: Timer): string => {
 // ------------------- TimersView Component -------------------
 
 const TimersView = () => {
-    const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, saveToUrl, updateTimer } = useTimerContext();
+    const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, saveToUrl, updateTimer, moveTimer } = useTimerContext();
     const [editingTimer, setEditingTimer] = useState<string | null>(null);
 
     const renderTimerDetails = (timer: Timer, isActive: boolean) => {
@@ -466,6 +486,16 @@ const TimersView = () => {
                         )}
 
                         <ButtonGroup>
+                            <MoveButton
+                                onClick={() => {
+                                    moveTimer(timer.id, 'up');
+                                    saveToUrl();
+                                }}
+                                disabled={index === 0 || timer.status === 'running' || editingTimer === timer.id}
+                                title="Move Up"
+                            >
+                                ↑
+                            </MoveButton>
                             <Button 
                                 $variant="edit"
                                 onClick={() => setEditingTimer(timer.id)}
@@ -474,6 +504,16 @@ const TimersView = () => {
                             >
                                 {editingTimer === timer.id ? 'Editing...' : 'Edit Timer'}
                             </Button>
+                            <MoveButton
+                                onClick={() => {
+                                    moveTimer(timer.id, 'down');
+                                    saveToUrl();
+                                }}
+                                disabled={index === timers.length - 1 || timer.status === 'running' || editingTimer === timer.id}
+                                title="Move Down"
+                            >
+                                ↓
+                            </MoveButton>
                         </ButtonGroup>
                     </TimerCard>
                 ))}
