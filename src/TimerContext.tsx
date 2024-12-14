@@ -75,10 +75,10 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         function updateTimer(currentTime: number) {
             const deltaTime = currentTime - lastUpdateTime;
             lastUpdateTime = currentTime;
-            
+
             setTimers(prevTimers => {
                 if (index >= prevTimers.length) return prevTimers;
-                
+
                 const updatedTimers = [...prevTimers];
                 const timer = updatedTimers[index];
 
@@ -217,7 +217,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 case 'countdown':
                     return total + timer.initialDuration;
                 case 'XY':
-                    return total + (timer.workTime) * timer.rounds * 2;
+                    return total + timer.workTime * timer.rounds * 2;
                 case 'tabata':
                     return total + (timer.workTime + timer.restTime) * timer.rounds;
             }

@@ -6,5 +6,8 @@ export default defineConfig({
   define: {
     __DEFINES__: '{}'
   },
-  base: '/assignment-3-ojncglg/'
+  base: '/assignment-3-ojncglg/',
+  preview: {
+    port: 4173
+  }
 })

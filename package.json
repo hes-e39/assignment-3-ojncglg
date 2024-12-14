@@ -5,7 +5,7 @@
   "homepage": "https://hes-e39.github.io/assignment-3-ojncglg/",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite build && vite preview",
     "build": "vite build",
     "lint": "npx @biomejs/biome check ./src",
     "lint:fix": "npm exec biome check --write ./src",
