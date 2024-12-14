@@ -95,12 +95,12 @@ const ButtonGroup = styled.div`
   justify-content: center;
 `;
 
-const Button = styled.button`
+const Button = styled.button<{ $variant?: 'save' | 'default' }>`
   padding: 12px 24px;
   border-radius: 5px;
   border: none;
-  background: #ffd700;
-  color: #000;
+  background: ${props => props.$variant === 'save' ? '#4CAF50' : '#ffd700'};
+  color: ${props => props.$variant === 'save' ? '#fff' : '#000'};
   cursor: pointer;
   font-weight: bold;
   font-family: 'Roboto', sans-serif;
@@ -113,6 +113,25 @@ const Button = styled.button`
   &:disabled {
     background: #666;
     cursor: not-allowed;
+  }
+`;
+
+const Notification = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 5px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+
+  &.show {
+    opacity: 1;
+    transform: translateY(0);
   }
 `;
 
@@ -171,7 +190,7 @@ const getTimerDescription = (timer: Timer): string => {
 // ------------------- TimersView Component -------------------
 
 const TimersView = () => {
-    const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime } = useTimerContext();
+const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, saveToUrl } = useTimerContext();
 
     const renderTimerDetails = (timer: Timer, isActive: boolean) => {
         if (!isActive) {
@@ -248,7 +267,28 @@ const TimersView = () => {
                 <Button onClick={fastForward} disabled={currentTimerIndex === null}>
                     Skip Timer
                 </Button>
+
+                <Button 
+                    $variant="save"
+                    onClick={() => {
+                        saveToUrl();
+                        const notification = document.getElementById('save-notification');
+                        if (notification) {
+                            notification.classList.add('show');
+                            setTimeout(() => {
+                                notification.classList.remove('show');
+                            }, 3000);
+                        }
+                    }} 
+                    disabled={timers.length === 0}
+                >
+                    Save Configuration
+                </Button>
             </ButtonGroup>
+
+            <Notification id="save-notification">
+                Configuration saved to URL! You can now share this URL.
+            </Notification>
         </Container>
     );
 };

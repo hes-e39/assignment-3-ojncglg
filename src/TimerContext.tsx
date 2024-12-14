@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { saveToLocalStorage, loadFromLocalStorage } from './utils/localStorage';
+import { updateUrlWithState, getStateFromUrl } from './utils/urlState';
 
 // Base timer configuration
 interface BaseTimer {
@@ -54,13 +56,31 @@ export type TimerContextType = {
     removeTimer: (id: string) => void;
     resetTimers: () => void;
     getTotalTime: () => number;
+    saveToUrl: () => void;
 };
 
 export const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [timers, setTimers] = useState<Timer[]>([]);
-    const [currentTimerIndex, setCurrentTimerIndex] = useState<number | null>(null);
+    const [timers, setTimers] = useState<Timer[]>(() => {
+        // First try to get state from URL (for shared configurations)
+        const urlState = getStateFromUrl();
+        if (urlState?.timers.length) {
+            return urlState.timers;
+        }
+        // Otherwise load from localStorage
+        const savedState = loadFromLocalStorage();
+        return savedState?.timers || [];
+    });
+    const [currentTimerIndex, setCurrentTimerIndex] = useState<number | null>(() => {
+        const savedState = loadFromLocalStorage();
+        return savedState?.currentTimerIndex || null;
+    });
+
+    // Save state whenever timers or currentTimerIndex changes
+    useEffect(() => {
+        saveToLocalStorage({ timers, currentTimerIndex });
+    }, [timers, currentTimerIndex]);
 
     useEffect(() => {
         if (typeof currentTimerIndex !== 'number' || currentTimerIndex >= timers.length) return;
@@ -224,6 +244,10 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }, 0);
     };
 
+    const saveToUrl = () => {
+        updateUrlWithState({ timers });
+    };
+
     return (
         <TimerContext.Provider
             value={{
@@ -235,6 +259,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 removeTimer,
                 resetTimers,
                 getTotalTime,
+                saveToUrl,
             }}
         >
             {children}
