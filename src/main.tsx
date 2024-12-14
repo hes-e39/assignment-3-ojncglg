@@ -13,6 +13,7 @@ import { ErrorFallback } from './components/generic/ErrorFallback';
 import TimersView from './views/TimersView';
 import DocumentationView from './views/DocumentationView';
 import AddTimerView from './views/AddTimerView';
+import HistoryView from './views/HistoryView';
 import { TimerProvider } from './TimerContext';
 
 // ------------------- Styled Components -------------------
@@ -79,6 +80,7 @@ const PageIndex = () => {
       <Header>Assignment</Header>
       <Navigation>
         <Button to="/">Timers</Button>
+        <Button to="/history">History</Button>
         <Button to="/docs">Documentation</Button>
         <Button to="/add">Add Timer</Button>
       </Navigation>
@@ -95,6 +97,7 @@ const router = createHashRouter([
     element: <PageIndex />,
     children: [
       { index: true, element: <TimersView /> },
+      { path: '/history', element: <HistoryView /> },
       { path: '/docs', element: <DocumentationView /> },
       { path: '/add', element: <AddTimerView /> },
     ],

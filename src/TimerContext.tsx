@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { saveToLocalStorage, loadFromLocalStorage } from './utils/localStorage';
+import { saveWorkoutToHistory } from './utils/workoutHistory';
 import { updateUrlWithState, getStateFromUrl } from './utils/urlState';
 
 // Base timer configuration
@@ -119,6 +120,13 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                             timer.duration = Math.min(newDuration, timer.maxDuration);
                             if (timer.duration >= timer.maxDuration) {
                                 timer.status = 'completed';
+                                // Check if this was the last timer
+                                const allCompleted = updatedTimers.every(t => 
+                                    t.status === 'completed' || t === timer
+                                );
+                                if (allCompleted) {
+                                    saveWorkoutToHistory(updatedTimers);
+                                }
                             }
                         }
                         break;
@@ -129,6 +137,13 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                             timer.duration = newDuration;
                             if (timer.duration === 0) {
                                 timer.status = 'completed';
+                                // Check if this was the last timer
+                                const allCompleted = updatedTimers.every(t => 
+                                    t.status === 'completed' || t === timer
+                                );
+                                if (allCompleted) {
+                                    saveWorkoutToHistory(updatedTimers);
+                                }
                             }
                         }
                         break;
@@ -145,6 +160,13 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                                     timer.currentRound++;
                                     if (timer.currentRound > timer.rounds) {
                                         timer.status = 'completed';
+                                        // Check if this was the last timer
+                                        const allCompleted = updatedTimers.every(t => 
+                                            t.status === 'completed' || t === timer
+                                        );
+                                        if (allCompleted) {
+                                            saveWorkoutToHistory(updatedTimers);
+                                        }
                                     } else {
                                         timer.isWorking = true;
                                         timer.duration = timer.workTime;
@@ -191,6 +213,12 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     const resetTimers = () => {
+        // Save completed workout to history if all timers are completed
+        const allCompleted = timers.every(timer => timer.status === 'completed');
+        if (allCompleted && timers.length > 0) {
+            saveWorkoutToHistory(timers);
+        }
+
         setRemainingTime(getTotalTime());
         setTimers(prev =>
             prev.map(timer => {
@@ -236,6 +264,14 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             setCurrentTimerIndex(nextIndex);
             setTimers(prev => prev.map((timer, index) => (index === nextIndex ? { ...timer, status: 'running' } : timer)));
         } else {
+            // All timers are completed, save to history
+            setTimers(prev => {
+                const allCompleted = prev.every(timer => timer.status === 'completed');
+                if (allCompleted && prev.length > 0) {
+                    saveWorkoutToHistory(prev);
+                }
+                return prev;
+            });
             setCurrentTimerIndex(null);
         }
     };
