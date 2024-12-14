@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ErrorBoundary } from 'react-error-boundary';
 import {
   Link,
   Outlet,
@@ -8,6 +9,7 @@ import {
 } from 'react-router-dom';
 import styled from 'styled-components';
 import './index.css';
+import { ErrorFallback } from './components/generic/ErrorFallback';
 import TimersView from './views/TimersView';
 import DocumentationView from './views/DocumentationView';
 import AddTimerView from './views/AddTimerView';
@@ -103,8 +105,16 @@ const router = createHashRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <TimerProvider>
-      <RouterProvider router={router} />
-    </TimerProvider>
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => {
+        // Reset the app state
+        window.location.reload();
+      }}
+    >
+      <TimerProvider>
+        <RouterProvider router={router} />
+      </TimerProvider>
+    </ErrorBoundary>
   </StrictMode>
 );

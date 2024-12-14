@@ -4,6 +4,8 @@ import { useTimerContext } from "../TimerContext";
 import styled from "styled-components";
 import type { Timer } from "../TimerContext";
 import { TIMER_CONFIG } from "../timerConfig";
+import { ErrorBoundary } from "react-error-boundary";
+import { ErrorFallback } from "../components/generic/ErrorFallback";
 
 const Container = styled.div`
   display: flex;
@@ -84,11 +86,12 @@ const Button = styled.button<{ $variant?: 'submit' | 'cancel' }>`
   }
 `;
 
-export default function AddTimerView() {
+function AddTimerContent() {
   const navigate = useNavigate();
   const { addTimer } = useTimerContext();
 
   const [type, setType] = useState<Timer["type"]>("stopwatch");
+  const [description, setDescription] = useState("");
   const [duration, setDuration] = useState<number | ''>(60);
   const [maxTime, setMaxTime] = useState<number | ''>(TIMER_CONFIG.STOPWATCH_MAX_TIME / 1000); // Convert from ms to seconds
   const [rounds, setRounds] = useState(5);
@@ -106,7 +109,8 @@ export default function AddTimerView() {
           type: "stopwatch",
           duration: 0,
           maxDuration: TIMER_CONFIG.STOPWATCH_MAX_TIME,
-          status: "not running"
+          status: "not running",
+          description: description
         } as Timer;
         break;
       }
@@ -116,7 +120,8 @@ export default function AddTimerView() {
           type: "countdown",
           duration: finalDuration * 1000,
           initialDuration: finalDuration * 1000,
-          status: "not running"
+          status: "not running",
+          description: description
         } as Timer;
         break;
       }
@@ -129,7 +134,8 @@ export default function AddTimerView() {
           workTime: workTime * 1000,
           isWorking: true,
           duration: workTime * 1000,
-          status: "not running"
+          status: "not running",
+          description: description
         } as Timer;
         break;
       }
@@ -143,7 +149,8 @@ export default function AddTimerView() {
           restTime: restTime * 1000,
           isWorking: true,
           duration: workTime * 1000,
-          status: "not running"
+          status: "not running",
+          description: description
         } as Timer;
         break;
       }
@@ -157,6 +164,16 @@ export default function AddTimerView() {
     <Container>
       <h2>Add New Timer</h2>
       <Form onSubmit={handleSubmit}>
+        <FormGroup>
+          <Label>Description</Label>
+          <Input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What needs to be done? (e.g., 50 push-ups)"
+          />
+        </FormGroup>
+
         <FormGroup>
           <Label>Timer Type</Label>
           <Select 
@@ -301,5 +318,19 @@ export default function AddTimerView() {
         </ButtonGroup>
       </Form>
     </Container>
+  );
+}
+
+export default function AddTimerView() {
+  return (
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => {
+        // Reset the form state when the user clicks "Try again"
+        window.location.reload();
+      }}
+    >
+      <AddTimerContent />
+    </ErrorBoundary>
   );
 }

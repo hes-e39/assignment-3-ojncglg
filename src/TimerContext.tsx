@@ -56,6 +56,7 @@ export type TimerContextType = {
     removeTimer: (id: string) => void;
     resetTimers: () => void;
     getTotalTime: () => number;
+    getRemainingTime: () => number;
     saveToUrl: () => void;
     updateTimer: (id: string, timer: Partial<Timer>) => void;
     moveTimer: (id: string, direction: 'up' | 'down') => void;
@@ -64,6 +65,7 @@ export type TimerContextType = {
 export const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [remainingTime, setRemainingTime] = useState<number>(0);
     const [timers, setTimers] = useState<Timer[]>(() => {
         // First try to get state from URL (for shared configurations)
         const urlState = getStateFromUrl();
@@ -82,6 +84,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Save state whenever timers or currentTimerIndex changes
     useEffect(() => {
         saveToLocalStorage({ timers, currentTimerIndex });
+        setRemainingTime(getTotalTime());
     }, [timers, currentTimerIndex]);
 
     useEffect(() => {
@@ -103,6 +106,11 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
                 const updatedTimers = [...prevTimers];
                 const timer = updatedTimers[index];
+                
+                // Update remaining time if timer is running
+                if (timer.status === 'running') {
+                    setRemainingTime(prev => Math.max(0, prev - deltaTime));
+                }
 
                 switch (timer.type) {
                     case 'stopwatch': {
@@ -183,6 +191,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     const resetTimers = () => {
+        setRemainingTime(getTotalTime());
         setTimers(prev =>
             prev.map(timer => {
                 switch (timer.type) {
@@ -318,6 +327,8 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }));
     };
 
+    const getRemainingTime = () => remainingTime;
+
     return (
         <TimerContext.Provider
             value={{
@@ -329,6 +340,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 removeTimer,
                 resetTimers,
                 getTotalTime,
+                getRemainingTime,
                 saveToUrl,
                 updateTimer,
                 moveTimer,

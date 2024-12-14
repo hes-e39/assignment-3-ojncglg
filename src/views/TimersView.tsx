@@ -3,6 +3,8 @@ import { useTimerContext } from '../TimerContext';
 import type { Timer, StopwatchTimer, CountdownTimer, XYTimer, TabataTimer } from '../TimerContext';
 import { formatTime } from '../utils/timeUtils';
 import { useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorFallback } from '../components/generic/ErrorFallback';
 
 // ------------------- Styled Components -------------------
 
@@ -241,15 +243,25 @@ const TotalTime = styled.div`
   width: 100%;
   text-align: center;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
   font-family: 'Roboto', sans-serif;
+
+  .time-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
   span {
     font-family: 'Digital-7', monospace;
     font-size: 1.4rem;
     letter-spacing: 2px;
+  }
+
+  .remaining {
+    color: ${props => props.theme.colors?.accent || '#2ecc40'};
   }
 `;
 
@@ -272,8 +284,8 @@ const getTimerDescription = (timer: Timer): string => {
 
 // ------------------- TimersView Component -------------------
 
-const TimersView = () => {
-    const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, saveToUrl, updateTimer, moveTimer } = useTimerContext();
+const TimersContent = () => {
+    const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, getRemainingTime, saveToUrl, updateTimer, moveTimer } = useTimerContext();
     const [editingTimer, setEditingTimer] = useState<string | null>(null);
 
     const renderTimerDetails = (timer: Timer, isActive: boolean) => {
@@ -281,16 +293,23 @@ const TimersView = () => {
             return <div>{getTimerDescription(timer)}</div>;
         }
 
+        const details = [];
+        if (timer.description) {
+            details.push(<div key="desc" style={{ color: '#4CAF50', marginBottom: '10px' }}>{timer.description}</div>);
+        }
+
         switch (timer.type) {
             case 'stopwatch':
-                return <div>Time: {formatTime(Math.min(timer.duration, timer.maxDuration))}</div>;
+                details.push(<div key="time">Time: {formatTime(Math.min(timer.duration, timer.maxDuration))}</div>);
+                return <>{details}</>;
 
             case 'countdown':
-                return <div>Remaining: {formatTime(timer.duration)}</div>;
+                details.push(<div key="remaining">Remaining: {formatTime(timer.duration)}</div>);
+                return <>{details}</>;
 
             case 'XY':
-                return (
-                    <div>
+                details.push(
+                    <div key="xy">
                         <div>
                             Round: {timer.currentRound}/{timer.rounds}
                         </div>
@@ -299,10 +318,11 @@ const TimersView = () => {
                         </div>
                     </div>
                 );
+                return <>{details}</>;
 
             case 'tabata':
-                return (
-                    <div>
+                details.push(
+                    <div key="tabata">
                         <div>
                             Round: {timer.currentRound}/{timer.rounds}
                         </div>
@@ -311,6 +331,7 @@ const TimersView = () => {
                         </div>
                     </div>
                 );
+                return <>{details}</>;
         }
     };
 
@@ -319,7 +340,14 @@ const TimersView = () => {
             <h2>Workout Timers</h2>
 
             <TotalTime>
-                Total Workout Time: <span>{formatTime(getTotalTime())}</span>
+                <div className="time-row">
+                    Total Workout Time: <span>{formatTime(getTotalTime())}</span>
+                </div>
+                {currentTimerIndex !== null && timers[currentTimerIndex]?.status === 'running' && (
+                    <div className="time-row">
+                        Time Remaining: <span className="remaining">{formatTime(getRemainingTime())}</span>
+                    </div>
+                )}
             </TotalTime>
 
             <TimersList>
@@ -344,6 +372,11 @@ const TimersView = () => {
                                 e.preventDefault();
                                 const formData = new FormData(e.currentTarget);
                                 const updates: Partial<Timer> = {};
+
+                                const description = formData.get('description');
+                                if (description !== null) {
+                                    updates.description = description as string;
+                                }
 
                                 switch (timer.type) {
                                     case 'stopwatch': {
@@ -384,6 +417,16 @@ const TimersView = () => {
                                 saveToUrl(); // Update URL with new configuration
                                 setEditingTimer(null);
                             }}>
+                                <div>
+                                    <label>Description</label>
+                                    <EditInput
+                                        type="text"
+                                        name="description"
+                                        defaultValue={timer.description}
+                                        placeholder="What needs to be done? (e.g., 50 push-ups)"
+                                    />
+                                </div>
+
                                 {timer.type === 'stopwatch' && (
                                     <div>
                                         <label>Maximum Time (seconds)</label>
@@ -555,6 +598,20 @@ const TimersView = () => {
                 Configuration saved to URL! You can now share this URL.
             </Notification>
         </Container>
+    );
+};
+
+const TimersView = () => {
+    return (
+        <ErrorBoundary
+            FallbackComponent={ErrorFallback}
+            onReset={() => {
+                // Reset the timer state when the user clicks "Try again"
+                window.location.reload();
+            }}
+        >
+            <TimersContent />
+        </ErrorBoundary>
     );
 };
 
