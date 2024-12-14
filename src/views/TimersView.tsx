@@ -1,7 +1,8 @@
 import styled from 'styled-components';
 import { useTimerContext } from '../TimerContext';
-import type { Timer } from '../TimerContext';
+import type { Timer, StopwatchTimer, CountdownTimer, XYTimer, TabataTimer } from '../TimerContext';
 import { formatTime } from '../utils/timeUtils';
+import { useState } from 'react';
 
 // ------------------- Styled Components -------------------
 
@@ -23,9 +24,10 @@ const TimersList = styled.div`
   margin: 20px 0;
 `;
 
-const TimerCard = styled.div<{ status: Timer['status'] }>`
+const TimerCard = styled.div<{ status: Timer['status']; isEditing?: boolean }>`
   background: #000;
-  border: 2px solid ${({ status }) => {
+  border: 2px solid ${({ status, isEditing }) => {
+      if (isEditing) return '#4CAF50';
       switch (status) {
           case 'running':
               return '#2ecc40';
@@ -40,6 +42,53 @@ const TimerCard = styled.div<{ status: Timer['status'] }>`
   border-radius: 8px;
   padding: 20px;
   position: relative;
+`;
+
+// Remove the EditButton styled component as we'll use the regular Button component
+
+const EditForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+`;
+
+const EditInput = styled.input`
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ffd700;
+  background: #111;
+  color: #ffd700;
+  font-size: 0.9rem;
+  width: 100%;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+`;
+
+const EditButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 10px;
+`;
+
+const EditActionButton = styled.button<{ $variant?: 'save' | 'cancel' }>`
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background: ${props => props.$variant === 'save' ? '#4CAF50' : '#ff4136'};
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+
+  &:hover {
+    opacity: 0.8;
+  }
 `;
 
 const TimerDisplay = styled.div`
@@ -95,16 +144,25 @@ const ButtonGroup = styled.div`
   justify-content: center;
 `;
 
-const Button = styled.button<{ $variant?: 'save' | 'default' }>`
+const Button = styled.button<{ $variant?: 'save' | 'edit' | 'default' }>`
   padding: 12px 24px;
   border-radius: 5px;
   border: none;
-  background: ${props => props.$variant === 'save' ? '#4CAF50' : '#ffd700'};
+  background: ${props => {
+    switch (props.$variant) {
+      case 'save':
+        return '#4CAF50';
+      case 'edit':
+        return '#ffd700';
+      default:
+        return '#ffd700';
+    }
+  }};
   color: ${props => props.$variant === 'save' ? '#fff' : '#000'};
   cursor: pointer;
   font-weight: bold;
   font-family: 'Roboto', sans-serif;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 
   &:hover {
     opacity: 0.8;
@@ -113,6 +171,11 @@ const Button = styled.button<{ $variant?: 'save' | 'default' }>`
   &:disabled {
     background: #666;
     cursor: not-allowed;
+  }
+
+  &[data-editing="true"] {
+    background: #4CAF50;
+    color: #fff;
   }
 `;
 
@@ -190,7 +253,8 @@ const getTimerDescription = (timer: Timer): string => {
 // ------------------- TimersView Component -------------------
 
 const TimersView = () => {
-const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, saveToUrl } = useTimerContext();
+    const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, saveToUrl, updateTimer } = useTimerContext();
+    const [editingTimer, setEditingTimer] = useState<string | null>(null);
 
     const renderTimerDetails = (timer: Timer, isActive: boolean) => {
         if (!isActive) {
@@ -240,8 +304,11 @@ const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, r
 
             <TimersList>
                 {timers.map((timer, index) => (
-                    <TimerCard key={timer.id} status={timer.status}>
-                        <RemoveButton onClick={() => removeTimer(timer.id)} disabled={timer.status === 'running'}>
+                    <TimerCard key={timer.id} status={timer.status} isEditing={editingTimer === timer.id}>
+                        <RemoveButton 
+                            onClick={() => removeTimer(timer.id)} 
+                            disabled={timer.status === 'running' || editingTimer === timer.id}
+                        >
                             ×
                         </RemoveButton>
 
@@ -251,10 +318,168 @@ const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, r
                         </TimerInfo>
 
                         <TimerDisplay>{renderTimerDetails(timer, index === currentTimerIndex)}</TimerDisplay>
+                        
+                        {editingTimer === timer.id && (
+                            <EditForm onSubmit={(e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.currentTarget);
+                                const updates: Partial<Timer> = {};
+
+                                switch (timer.type) {
+                                    case 'stopwatch': {
+                                        const maxDuration = formData.get('maxDuration');
+                                        if (maxDuration) {
+                                            (updates as Partial<StopwatchTimer>).maxDuration = Number.parseInt(maxDuration as string, 10) * 1000;
+                                        }
+                                        break;
+                                    }
+                                    case 'countdown': {
+                                        const initialDuration = formData.get('initialDuration');
+                                        if (initialDuration) {
+                                            (updates as Partial<CountdownTimer>).initialDuration = Number.parseInt(initialDuration as string, 10) * 1000;
+                                        }
+                                        break;
+                                    }
+                                    case 'XY': {
+                                        const xyRounds = formData.get('rounds');
+                                        const xyWorkTime = formData.get('workTime');
+                                        const xyUpdates = updates as Partial<XYTimer>;
+                                        if (xyRounds) xyUpdates.rounds = Number.parseInt(xyRounds as string, 10);
+                                        if (xyWorkTime) xyUpdates.workTime = Number.parseInt(xyWorkTime as string, 10) * 1000;
+                                        break;
+                                    }
+                                    case 'tabata': {
+                                        const tabataRounds = formData.get('rounds');
+                                        const tabataWorkTime = formData.get('workTime');
+                                        const tabataRestTime = formData.get('restTime');
+                                        const tabataUpdates = updates as Partial<TabataTimer>;
+                                        if (tabataRounds) tabataUpdates.rounds = Number.parseInt(tabataRounds as string, 10);
+                                        if (tabataWorkTime) tabataUpdates.workTime = Number.parseInt(tabataWorkTime as string, 10) * 1000;
+                                        if (tabataRestTime) tabataUpdates.restTime = Number.parseInt(tabataRestTime as string, 10) * 1000;
+                                        break;
+                                    }
+                                }
+
+                                updateTimer(timer.id, updates);
+                                saveToUrl(); // Update URL with new configuration
+                                setEditingTimer(null);
+                            }}>
+                                {timer.type === 'stopwatch' && (
+                                    <div>
+                                        <label>Maximum Time (seconds)</label>
+                                        <EditInput
+                                            type="number"
+                                            name="maxDuration"
+                                            defaultValue={timer.maxDuration / 1000}
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
+                                )}
+
+                                {timer.type === 'countdown' && (
+                                    <div>
+                                        <label>Duration (seconds)</label>
+                                        <EditInput
+                                            type="number"
+                                            name="initialDuration"
+                                            defaultValue={timer.initialDuration / 1000}
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
+                                )}
+
+                                {timer.type === 'XY' && (
+                                    <>
+                                        <div>
+                                            <label>Number of Rounds</label>
+                                            <EditInput
+                                                type="number"
+                                                name="rounds"
+                                                defaultValue={timer.rounds}
+                                                min="1"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label>Work Time (seconds)</label>
+                                            <EditInput
+                                                type="number"
+                                                name="workTime"
+                                                defaultValue={timer.workTime / 1000}
+                                                min="1"
+                                                required
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
+                                {timer.type === 'tabata' && (
+                                    <>
+                                        <div>
+                                            <label>Number of Rounds</label>
+                                            <EditInput
+                                                type="number"
+                                                name="rounds"
+                                                defaultValue={timer.rounds}
+                                                min="1"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label>Work Time (seconds)</label>
+                                            <EditInput
+                                                type="number"
+                                                name="workTime"
+                                                defaultValue={timer.workTime / 1000}
+                                                min="1"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label>Rest Time (seconds)</label>
+                                            <EditInput
+                                                type="number"
+                                                name="restTime"
+                                                defaultValue={timer.restTime / 1000}
+                                                min="1"
+                                                required
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
+                                <EditButtonGroup>
+                                    <EditActionButton type="submit" $variant="save">
+                                        Save
+                                    </EditActionButton>
+                                    <EditActionButton 
+                                        type="button" 
+                                        $variant="cancel"
+                                        onClick={() => setEditingTimer(null)}
+                                    >
+                                        Cancel
+                                    </EditActionButton>
+                                </EditButtonGroup>
+                            </EditForm>
+                        )}
+
+                        <ButtonGroup>
+                            <Button 
+                                $variant="edit"
+                                onClick={() => setEditingTimer(timer.id)}
+                                disabled={timer.status === 'running' || editingTimer !== null}
+                                data-editing={editingTimer === timer.id}
+                            >
+                                {editingTimer === timer.id ? 'Editing...' : 'Edit Timer'}
+                            </Button>
+                        </ButtonGroup>
                     </TimerCard>
                 ))}
             </TimersList>
 
+            {/* Main button group */}
             <ButtonGroup>
                 <Button onClick={toggleStartPause} disabled={timers.length === 0}>
                     {currentTimerIndex !== null && timers[currentTimerIndex]?.status === 'running' ? 'Pause' : 'Start'}

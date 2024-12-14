@@ -57,6 +57,7 @@ export type TimerContextType = {
     resetTimers: () => void;
     getTotalTime: () => number;
     saveToUrl: () => void;
+    updateTimer: (id: string, timer: Partial<Timer>) => void;
 };
 
 export const TimerContext = createContext<TimerContextType | undefined>(undefined);
@@ -248,6 +249,60 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         updateUrlWithState({ timers });
     };
 
+    const updateTimer = (id: string, updates: Partial<Timer>) => {
+        setTimers(prev => prev.map(timer => {
+            if (timer.id !== id) return timer;
+
+            switch (timer.type) {
+                case 'stopwatch': {
+                    const updatedTimer: StopwatchTimer = {
+                        ...timer,
+                        ...(updates as Partial<StopwatchTimer>),
+                        type: 'stopwatch'
+                    };
+                    return updatedTimer;
+                }
+                case 'countdown': {
+                    const updatedTimer: CountdownTimer = {
+                        ...timer,
+                        ...(updates as Partial<CountdownTimer>),
+                        type: 'countdown'
+                    };
+                    if ('initialDuration' in updates) {
+                        updatedTimer.duration = updates.initialDuration!;
+                    }
+                    return updatedTimer;
+                }
+                case 'XY': {
+                    const updatedTimer: XYTimer = {
+                        ...timer,
+                        ...(updates as Partial<XYTimer>),
+                        type: 'XY'
+                    };
+                    if ('rounds' in updates || 'workTime' in updates) {
+                        updatedTimer.currentRound = 1;
+                        updatedTimer.duration = updates.workTime || timer.workTime;
+                        updatedTimer.isWorking = true;
+                    }
+                    return updatedTimer;
+                }
+                case 'tabata': {
+                    const updatedTimer: TabataTimer = {
+                        ...timer,
+                        ...(updates as Partial<TabataTimer>),
+                        type: 'tabata'
+                    };
+                    if ('rounds' in updates || 'workTime' in updates || 'restTime' in updates) {
+                        updatedTimer.currentRound = 1;
+                        updatedTimer.duration = updates.workTime || timer.workTime;
+                        updatedTimer.isWorking = true;
+                    }
+                    return updatedTimer;
+                }
+            }
+        }));
+    };
+
     return (
         <TimerContext.Provider
             value={{
@@ -260,6 +315,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 resetTimers,
                 getTotalTime,
                 saveToUrl,
+                updateTimer,
             }}
         >
             {children}
