@@ -9,6 +9,7 @@ import {
     DeleteButton,
     StatusIndicator
 } from '../SharedStyles';
+import { ProgressBar } from './SharedTimerComponents';
 import type { TimerStatus } from './types';
 
 interface TimerDisplayProps {
@@ -16,16 +17,19 @@ interface TimerDisplayProps {
     maxDuration?: number;
     status: TimerStatus;
     onDelete?: () => void;
+    timerType?: string;
 }
 
-const TimerDisplay: React.FC<TimerDisplayProps> = ({ duration, maxDuration, status, onDelete }) => {
+const TimerDisplay: React.FC<TimerDisplayProps> = ({ duration, maxDuration, status, onDelete, timerType = "STOPWATCH" }) => {
     const displayStatus = status === 'not running' ? 'ready' : status;
+
+    const progressPercent = maxDuration ? Math.floor((duration / maxDuration) * 100) : 0;
 
     return (
         <TimeDisplayContainer status={displayStatus}>
             <TimerHeader>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <TimerType>STOPWATCH</TimerType>
+                    <TimerType>{timerType}</TimerType>
                     <StatusIndicator status={displayStatus}>
                         {displayStatus === 'ready' ? 'DELETE' : displayStatus.toUpperCase()}
                     </StatusIndicator>
@@ -47,6 +51,14 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({ duration, maxDuration, stat
                     </DeleteButton>
                 )}
             </ButtonContainer>
+            <div style={{ width: '100%', padding: '0 20px' }}>
+                {maxDuration && status !== 'completed' && (
+                    <ProgressBar 
+                        percent={progressPercent} 
+                        showLabel={false}
+                    />
+                )}
+            </div>
         </TimeDisplayContainer>
     );
 };

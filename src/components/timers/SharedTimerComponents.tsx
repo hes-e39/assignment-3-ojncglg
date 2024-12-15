@@ -6,12 +6,12 @@ import type { ProgressBarProps } from './types';
 // Progress bar container with fixed dimensions and visible background
 export const ProgressBarContainer = styled.div`
   width: 100%;
-  max-width: 300px;
-  height: 20px;
+  height: 8px;
   background-color: #333;
-  border-radius: 10px;
-  padding: 3px;
-  border: 2px solid #444;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 10px;
+  position: relative;
 `;
 
 // Progress indicator with enforced boundaries
@@ -19,8 +19,10 @@ export const Progress = styled.div<{ percent: number }>`
   width: ${props => Math.max(0, Math.min(100, props.percent))}%;
   height: 100%;
   background-color: #ffd700;
-  border-radius: 8px;
-  transition: width 0.3s ease;
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: width 0.3s ease-out;
 `;
 
 // Label for the progress percentage

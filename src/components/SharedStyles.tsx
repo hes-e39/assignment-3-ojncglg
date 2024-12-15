@@ -142,6 +142,25 @@ export const DeleteButton = styled.button`
   }
 `;
 
+export const ProgressBarContainer = styled.div`
+  width: 100%;
+  height: 4px;
+  background-color: #333;
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+`;
+
+export const ProgressBarFill = styled.div<{ progress: number }>`
+  width: ${props => props.progress}%;
+  height: 100%;
+  background-color: #ffd700;
+  transition: width 0.3s ease;
+`;
+
 export const StatusIndicator = styled.div<{ status: string }>`
   color: ${({ status }) => 
     status === 'running' ? '#4CAF50' : 

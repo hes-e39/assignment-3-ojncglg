@@ -24,8 +24,14 @@ export default function Stopwatch({
 
     return (
         <Container role="timer" aria-label="Stopwatch Timer">
-            <Label>STOPWATCH</Label>
-            <TimerDisplay duration={duration} maxDuration={maxDuration} status={status} onDelete={onDelete} />
+            <Label>STOPPPPWATCH</Label>
+            <TimerDisplay 
+                duration={duration} 
+                maxDuration={maxDuration} 
+                status={status} 
+                onDelete={onDelete}
+                timerType="STOPPPPWATCH" 
+            />
             {isActive && (
                 <InfoBox role="status" aria-live="polite">
                     {duration < maxDuration ? (

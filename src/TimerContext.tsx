@@ -120,6 +120,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                             timer.duration = Math.min(newDuration, timer.maxDuration);
                             if (timer.duration >= timer.maxDuration) {
                                 timer.status = 'completed';
+                                updateTotalTime(timer);
                                 // Check if this was the last timer
                                 const allCompleted = updatedTimers.every(t => 
                                     t.status === 'completed' || t === timer
@@ -137,6 +138,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                             timer.duration = newDuration;
                             if (timer.duration === 0) {
                                 timer.status = 'completed';
+                                updateTotalTime(timer);
                                 // Check if this was the last timer
                                 const allCompleted = updatedTimers.every(t => 
                                     t.status === 'completed' || t === timer
@@ -160,6 +162,7 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                                     timer.currentRound++;
                                     if (timer.currentRound > timer.rounds) {
                                         timer.status = 'completed';
+                                        updateTotalTime(timer);
                                         // Check if this was the last timer
                                         const allCompleted = updatedTimers.every(t => 
                                             t.status === 'completed' || t === timer
@@ -219,7 +222,9 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             saveWorkoutToHistory(timers);
         }
 
-        setRemainingTime(getTotalTime());
+        // Reset total workout time and remaining time
+        setTotalWorkoutTime(0);
+        setRemainingTime(0);
         setTimers(prev =>
             prev.map(timer => {
                 switch (timer.type) {
@@ -257,6 +262,12 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const fastForward = () => {
         if (currentTimerIndex === null) return;
 
+        // Update total time for the skipped timer
+        const currentTimer = timers[currentTimerIndex];
+        if (currentTimer.status !== 'completed') {
+            updateTotalTime(currentTimer);
+        }
+
         setTimers(prev => prev.map((timer, index) => (index === currentTimerIndex ? { ...timer, status: 'completed' } : timer)));
 
         const nextIndex = currentTimerIndex + 1;
@@ -276,19 +287,26 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     };
 
-    const getTotalTime = () => {
-        return timers.reduce((total, timer) => {
-            switch (timer.type) {
-                case 'stopwatch':
-                    return total;
-                case 'countdown':
-                    return total + timer.initialDuration;
-                case 'XY':
-                    return total + timer.workTime * timer.rounds * 2;
-                case 'tabata':
-                    return total + (timer.workTime + timer.restTime) * timer.rounds;
-            }
-        }, 0);
+    const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
+
+    const getTotalTime = () => totalWorkoutTime;
+
+    // Update total time when a timer completes
+    const updateTotalTime = (timer: Timer) => {
+        switch (timer.type) {
+            case 'stopwatch':
+                setTotalWorkoutTime(prev => prev + timer.duration);
+                break;
+            case 'countdown':
+                setTotalWorkoutTime(prev => prev + timer.initialDuration);
+                break;
+            case 'XY':
+                setTotalWorkoutTime(prev => prev + (timer.workTime * timer.rounds));
+                break;
+            case 'tabata':
+                setTotalWorkoutTime(prev => prev + ((timer.workTime + timer.restTime) * timer.rounds));
+                break;
+        }
     };
 
     const saveToUrl = () => {
