@@ -1,6 +1,50 @@
 import styled from 'styled-components';
 import { formatTime } from '../../utils/timeUtils';
 import { InfoBox } from '../SharedStyles';
+import type { ProgressBarProps } from './types';
+
+// Progress bar container with fixed dimensions and visible background
+export const ProgressBarContainer = styled.div`
+  width: 100%;
+  max-width: 300px;
+  height: 20px;
+  background-color: #333;
+  border-radius: 10px;
+  padding: 3px;
+  border: 2px solid #444;
+`;
+
+// Progress indicator with enforced boundaries
+export const Progress = styled.div<{ percent: number }>`
+  width: ${props => Math.max(0, Math.min(100, props.percent))}%;
+  height: 100%;
+  background-color: #ffd700;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+`;
+
+// Label for the progress percentage
+export const ProgressLabel = styled.div`
+  font-size: 0.9rem;
+  color: #ffd700;
+  text-align: center;
+  margin-bottom: 5px;
+`;
+
+export const ProgressBar = ({ percent, label, showLabel = true }: ProgressBarProps) => (
+  <>
+    {showLabel && label && <ProgressLabel>{label}</ProgressLabel>}
+    <ProgressBarContainer>
+      <Progress 
+        percent={percent} 
+        role="progressbar" 
+        aria-valuenow={percent} 
+        aria-valuemin={0} 
+        aria-valuemax={100} 
+      />
+    </ProgressBarContainer>
+  </>
+);
 
 export const PhaseIndicator = styled.div<{ isWorking: boolean }>`
   font-size: 1.8rem;
