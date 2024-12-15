@@ -1,63 +1,8 @@
-/* Import Roboto font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Import Digital-7 font */
 @font-face {
-  font-family: "Digital-7";
-  src: url("./fonts/digital-7.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-}
-
-/* Reset default styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* Base styles */
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #222;
-  color: #ffd700;
-  font-family: 'Roboto', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
-
-/* Timer display styles */
-.time-display {
-  font-family: "Digital-7", monospace;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-}
-
-/* Interactive elements */
-button {
-  font-family: 'Roboto', sans-serif;
-  cursor: pointer;
-}
-
-/* List styles */
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-/* Link styles */
-a {
-  text-decoration: none;
-  color: inherit;
-  transition: color 0.3s ease;
-}
-
-a:hover {
-  color: #ffcc00;
+  font-family: 'Digital-7';
+  src: url('./fonts/digital-7.ttf') format('truetype');
 }

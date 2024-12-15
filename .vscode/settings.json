@@ -1,19 +1,6 @@
 {
-	// Disable the default formatter, use biome instead
-	"prettier.enable": false,
-	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "biomejs.biome",
-	// Auto fix
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit",
-		"source.fixAll.biome": "explicit",
-		"quickfix.biome": "explicit"
-	},
-    "editor.indentSize": 4,
-    "[typescript]": {
-        "editor.defaultFormatter": "biomejs.biome"
-    },
-	"[typescriptreact]": {
-        "editor.defaultFormatter": "biomejs.biome"
-    }
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "postcss.validate": false
 }
