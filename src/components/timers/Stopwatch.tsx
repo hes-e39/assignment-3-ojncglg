@@ -11,10 +11,9 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  padding: 20px;
-  background-color: #000;
-  border-radius: 10px;
-  border: 2px solid #ffd700;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 `;
 
 const Label = styled.div`
@@ -48,9 +47,10 @@ interface StopwatchProps {
     maxDuration: number;
     status: 'not running' | 'running' | 'paused' | 'completed';
     isActive?: boolean;
+    onDelete?: () => void;
 }
 
-export default function Stopwatch({ duration, maxDuration = TIMER_CONFIG.STOPWATCH_MAX_TIME, status, isActive = false }: StopwatchProps) {
+export default function Stopwatch({ duration, maxDuration = TIMER_CONFIG.STOPWATCH_MAX_TIME, status, isActive = false, onDelete }: StopwatchProps) {
     const { fastForward } = useTimerContext();
 
     const isMaxTimeReached = duration >= TIMER_CONFIG.STOPWATCH_MAX_TIME;
@@ -61,8 +61,8 @@ export default function Stopwatch({ duration, maxDuration = TIMER_CONFIG.STOPWAT
 
     return (
         <Container role="timer" aria-label="Stopwatch Timer">
-            <Label>Stopwatch</Label>
-            <TimerDisplay duration={duration} maxDuration={maxDuration} status={status} />
+            <Label>Stopppwatch</Label>
+            <TimerDisplay duration={duration} maxDuration={maxDuration} status={status} onDelete={onDelete} />
             {isActive && (
                 <TimeInfo role="status" aria-live="polite">
                     {duration < maxDuration ? (

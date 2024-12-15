@@ -28,25 +28,12 @@ const TimersList = styled.div`
 
 const TimerCard = styled.div<{ status: Timer['status']; isEditing?: boolean }>`
   background: #000;
-  border: 2px solid ${({ status, isEditing }) => {
-      if (isEditing) return '#4CAF50';
-      switch (status) {
-          case 'running':
-              return '#2ecc40';
-          case 'paused':
-              return '#ff851b';
-          case 'completed':
-              return '#ff4136';
-          default:
-              return '#ffd700';
-      }
-  }};
   border-radius: 8px;
   padding: 20px;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
 `;
-
-// Remove the EditButton styled component as we'll use the regular Button component
 
 const EditForm = styled.form`
   display: flex;
@@ -93,7 +80,7 @@ const EditActionButton = styled.button<{ $variant?: 'save' | 'cancel' }>`
   }
 `;
 
-const TimerDisplay = styled.div`
+const TimerDetailsContainer = styled.div`
   font-size: 2.5rem;
   font-family: 'Digital-7', monospace;
   text-align: center;
@@ -222,17 +209,24 @@ const MoveButton = styled(Button)`
 
 const RemoveButton = styled.button`
   position: absolute;
-  top: 10px;
+  bottom: 10px;
   right: 10px;
-  background: none;
+  padding: 8px 16px;
+  background-color: #ff4444;
+  color: white;
   border: none;
-  color: #ff4136;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 1.2rem;
-  padding: 5px;
+  font-weight: bold;
+  transition: all 0.2s;
 
   &:hover {
-    color: #ff725c;
+    background-color: #ff2222;
+  }
+
+  &:disabled {
+    background-color: #666;
+    cursor: not-allowed;
   }
 `;
 
@@ -357,7 +351,7 @@ const TimersContent = () => {
                             onClick={() => removeTimer(timer.id)} 
                             disabled={timer.status === 'running' || editingTimer === timer.id}
                         >
-                            ×
+                            Delete
                         </RemoveButton>
 
                         <TimerInfo>
@@ -365,7 +359,7 @@ const TimersContent = () => {
                             <TimerStatus status={timer.status}>{timer.status.toUpperCase()}</TimerStatus>
                         </TimerInfo>
 
-                        <TimerDisplay>{renderTimerDetails(timer, index === currentTimerIndex)}</TimerDisplay>
+                        <TimerDetailsContainer>{renderTimerDetails(timer, index === currentTimerIndex)}</TimerDetailsContainer>
                         
                         {editingTimer === timer.id && (
                             <EditForm onSubmit={(e) => {
