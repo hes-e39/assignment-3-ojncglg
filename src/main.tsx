@@ -1,3 +1,6 @@
+// This file serves as the entry point for the React application.
+// It sets up the main application structure, routing, and error handling.
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -18,6 +21,7 @@ import { TimerProvider } from './TimerContext';
 
 // ------------------- Styled Components -------------------
 
+// Styled container for the main page
 const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -29,6 +33,7 @@ const PageContainer = styled.div`
   font-family: "Digital-7", "Roboto Mono", monospace;
 `;
 
+// Styled header for the main page
 const Header = styled.h1`
   font-size: 2.5rem;
   margin-bottom: 20px;
@@ -36,6 +41,7 @@ const Header = styled.h1`
   color: #ffd700;
 `;
 
+// Styled navigation container
 const Navigation = styled.div`
   display: flex;
   flex-direction: column;
@@ -47,6 +53,7 @@ const Navigation = styled.div`
   max-width: 400px;
 `;
 
+// Styled button for navigation links
 const Button = styled(Link)`
   text-decoration: none;
   background-color: #000;
@@ -74,6 +81,7 @@ const Button = styled(Link)`
 
 // ------------------- PageIndex Component -------------------
 
+// PageIndex component serves as the main layout for the application
 const PageIndex = () => {
   return (
     <PageContainer>
@@ -91,6 +99,7 @@ const PageIndex = () => {
 
 // ------------------- Router Configuration -------------------
 
+// Create a hash router for the application
 const router = createHashRouter([
   {
     path: '/',
@@ -106,6 +115,7 @@ const router = createHashRouter([
 
 // ------------------- App Initialization -------------------
 
+// Render the application
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary

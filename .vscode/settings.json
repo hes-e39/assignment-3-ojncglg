@@ -1,6 +1,13 @@
+// This file contains Visual Studio Code settings for the project.
+// It configures validation for various stylesheet formats.
+
 {
+  // Disable CSS validation to avoid errors for Tailwind CSS classes
   "css.validate": false,
+  // Disable LESS validation
   "less.validate": false,
+  // Disable SCSS validation
   "scss.validate": false,
+  // Disable PostCSS validation
   "postcss.validate": false
 }

@@ -1,3 +1,6 @@
+// This file contains shared components and styled elements used for timer functionalities.
+// It includes progress bars, phase indicators, and timer summaries.
+
 import styled from 'styled-components';
 import { formatTime } from '../../utils/timeUtils';
 import { InfoBox } from '../SharedStyles';
@@ -33,6 +36,7 @@ export const ProgressLabel = styled.div`
   margin-bottom: 5px;
 `;
 
+// ProgressBar component to display the progress of a timer
 export const ProgressBar = ({ percent, label, showLabel = true }: ProgressBarProps) => (
   <>
     {showLabel && label && <ProgressLabel>{label}</ProgressLabel>}
@@ -48,6 +52,7 @@ export const ProgressBar = ({ percent, label, showLabel = true }: ProgressBarPro
   </>
 );
 
+// PhaseIndicator component to indicate the current phase (working/resting)
 export const PhaseIndicator = styled.div<{ isWorking: boolean }>`
   font-size: 1.8rem;
   color: ${props => (props.isWorking ? '#2ecc40' : '#ff851b')};
@@ -60,6 +65,7 @@ export const PhaseIndicator = styled.div<{ isWorking: boolean }>`
   letter-spacing: 2px;
 `;
 
+// TimerInfo component to display timer-related information
 export const TimerInfo = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -69,17 +75,19 @@ export const TimerInfo = styled.div`
   margin-top: 10px;
 `;
 
+// RoundInfo component to display information about the current round
 export const RoundInfo = styled.div`
   font-size: 1.5rem;
   color: #ffd700;
   margin: 10px 0;
 `;
 
+// TimerSummary component to display summary information about the timer
 interface TimerSummaryProps {
-  rounds?: number;
-  workTime?: number;
-  restTime?: number;
-  totalTime: number;
+  rounds?: number; // Number of rounds (optional)
+  workTime?: number; // Work time in milliseconds (optional)
+  restTime?: number; // Rest time in milliseconds (optional)
+  totalTime: number; // Total time in milliseconds
 }
 
 export const TimerSummary = ({ rounds, workTime, restTime, totalTime }: TimerSummaryProps) => (
@@ -91,13 +99,14 @@ export const TimerSummary = ({ rounds, workTime, restTime, totalTime }: TimerSum
   </TimerInfo>
 );
 
+// TimerProgress component to display progress information for the timer
 interface TimerProgressProps {
-  currentRound: number;
-  rounds: number;
-  duration: number;
-  isWorking: boolean;
-  workTime: number;
-  restTime: number;
+  currentRound: number; // Current round number
+  rounds: number; // Total number of rounds
+  duration: number; // Current duration in milliseconds
+  isWorking: boolean; // Indicates if the timer is in the working phase
+  workTime: number; // Work time in milliseconds
+  restTime: number; // Rest time in milliseconds
 }
 
 export const TimerProgress = ({ currentRound, rounds, duration, isWorking, workTime, restTime }: TimerProgressProps) => (

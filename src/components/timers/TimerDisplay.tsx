@@ -1,3 +1,6 @@
+// This component displays the current status and duration of a timer.
+// It provides visual feedback on the timer's progress and allows the user to complete or delete the timer.
+
 import { formatTime } from '../../utils/timeUtils';
 import { 
     TimeDisplayContainer, 
@@ -13,25 +16,29 @@ import {
 import { ProgressBar } from './SharedTimerComponents';
 import type { TimerStatus } from './types';
 
+// Props interface for the TimerDisplay component
 interface TimerDisplayProps {
-    duration: number;
-    maxDuration?: number;
-    status: TimerStatus;
-    onDelete?: () => void;
-    onComplete?: () => void;
-    timerType?: string;
+    duration: number; // Current duration of the timer in milliseconds
+    maxDuration?: number; // Maximum duration of the timer in milliseconds (optional)
+    status: TimerStatus; // Current status of the timer (e.g., running, paused, completed)
+    onDelete?: () => void; // Callback function to delete the timer (optional)
+    onComplete?: () => void; // Callback function to mark the timer as complete (optional)
+    timerType?: string; // Type of the timer (e.g., "STOPWATCH" or "COUNTDOWN")
 }
 
+// TimerDisplay component definition
 const TimerDisplay: React.FC<TimerDisplayProps> = ({ 
     duration, 
     maxDuration, 
     status, 
     onDelete, 
     onComplete,
-    timerType = "STOPWATCH" 
+    timerType = "STOPWATCH" // Default timer type is "STOPWATCH"
 }) => {
+    // Determine the display status based on the current status
     const displayStatus = status === 'not running' ? 'ready' : status;
 
+    // Calculate the progress percentage based on the timer type
     const progressPercent = maxDuration ? 
         (timerType === "COUNTDOWN" ? 
             Math.floor(((maxDuration - duration) / maxDuration) * 100) : 

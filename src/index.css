@@ -1,8 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* This file contains global styles for the application. */
+/* It includes Tailwind CSS directives and custom font declarations. */
 
+@tailwind base; /* Include base styles from Tailwind CSS */
+@tailwind components; /* Include component styles from Tailwind CSS */
+@tailwind utilities; /* Include utility classes from Tailwind CSS */
+
+/* Custom font declaration for 'Digital-7' */
 @font-face {
-  font-family: 'Digital-7';
-  src: url('./fonts/digital-7.ttf') format('truetype');
+  font-family: 'Digital-7'; /* Name of the font */
+  src: url('./fonts/digital-7.ttf') format('truetype'); /* Path to the font file */
 }

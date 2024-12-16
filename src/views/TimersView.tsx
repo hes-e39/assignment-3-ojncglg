@@ -116,73 +116,6 @@ const Button = styled.button<{ $variant?: 'save' | 'edit' | 'default' }>`
     background: #666;
     cursor: not-allowed;
   }
-
-  &[data-editing="true"] {
-    background: #4CAF50;
-    color: #fff;
-  }
-`;
-
-const Notification = styled.div`
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 15px 25px;
-  background: #4CAF50;
-  color: white;
-  border-radius: 5px;
-  opacity: 0;
-  transform: translateY(-20px);
-  transition: all 0.3s ease;
-  z-index: 1000;
-
-  &.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const MoveButton = styled(Button)`
-  padding: 12px 20px;
-  margin: 0;
-  font-size: 1.5rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: ${props => props.disabled ? '#666' : '#ffd700'};
-  color: #000;
-  
-  &:hover:not(:disabled) {
-    opacity: 0.8;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-  }
-`;
-
-const RemoveButton = styled.button`
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  padding: 8px 16px;
-  background-color: #ff4444;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: #ff2222;
-  }
-
-  &:disabled {
-    background-color: #666;
-    cursor: not-allowed;
-  }
 `;
 
 const TotalTime = styled.div`
@@ -215,6 +148,25 @@ const TotalTime = styled.div`
 `;
 
 // ------------------- TimersView Component -------------------
+
+const NotificationDiv = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 5px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+
+  &.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const TimersContent = () => {
     const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, getRemainingTime, saveToUrl, updateTimer, moveTimer } = useTimerContext();
@@ -410,74 +362,66 @@ const TimersContent = () => {
                         )}
 
                         <ButtonGroup>
-                            <MoveButton
+                            <Button
                                 onClick={() => {
                                     moveTimer(timer.id, 'up');
                                     saveToUrl();
                                 }}
                                 disabled={index === 0 || timer.status === 'running' || editingTimer === timer.id}
-                                title="Move Up"
                             >
                                 ↑
-                            </MoveButton>
-                            <Button 
-                                $variant="edit"
-                                onClick={() => setEditingTimer(timer.id)}
-                                disabled={timer.status === 'running' || editingTimer !== null}
-                                data-editing={editingTimer === timer.id}
-                            >
-                                {editingTimer === timer.id ? 'Editing...' : 'Edit Timer'}
                             </Button>
-                            <MoveButton
+                            <Button
                                 onClick={() => {
                                     moveTimer(timer.id, 'down');
                                     saveToUrl();
                                 }}
                                 disabled={index === timers.length - 1 || timer.status === 'running' || editingTimer === timer.id}
-                                title="Move Down"
                             >
                                 ↓
-                            </MoveButton>
+                            </Button>
                         </ButtonGroup>
+
+                        <ButtonGroup>
+                            <Button
+                                onClick={toggleStartPause}
+                                disabled={timers.length === 0}
+                            >
+                                {currentTimerIndex !== null && timers[currentTimerIndex]?.status === 'running' ? 'Pause' : 'Start'}
+                            </Button>
+
+                            <Button onClick={resetTimers} disabled={timers.length === 0}>
+                                Reset All
+                            </Button>
+
+                            <Button onClick={fastForward} disabled={currentTimerIndex === null}>
+                                Skip Timer
+                            </Button>
+
+                            <Button 
+                                $variant="save"
+                                onClick={() => {
+                                    saveToUrl();
+                                    const notification = document.getElementById('save-notification');
+                                    if (notification) {
+                                        notification.classList.add('show');
+                                        setTimeout(() => {
+                                            notification.classList.remove('show');
+                                        }, 3000);
+                                    }
+                                }} 
+                                disabled={timers.length === 0}
+                            >
+                                Save Configuration
+                            </Button>
+                        </ButtonGroup>
+
+                        <NotificationDiv id="save-notification">
+                            Configuration saved to URL! You can now share this URL.
+                        </NotificationDiv>
                     </TimerCard>
                 ))}
             </TimersList>
-
-            {/* Main button group */}
-            <ButtonGroup>
-                <Button onClick={toggleStartPause} disabled={timers.length === 0}>
-                    {currentTimerIndex !== null && timers[currentTimerIndex]?.status === 'running' ? 'Pause' : 'Start'}
-                </Button>
-
-                <Button onClick={resetTimers} disabled={timers.length === 0}>
-                    Reset All
-                </Button>
-
-                <Button onClick={fastForward} disabled={currentTimerIndex === null}>
-                    Skip Timer
-                </Button>
-
-                <Button 
-                    $variant="save"
-                    onClick={() => {
-                        saveToUrl();
-                        const notification = document.getElementById('save-notification');
-                        if (notification) {
-                            notification.classList.add('show');
-                            setTimeout(() => {
-                                notification.classList.remove('show');
-                            }, 3000);
-                        }
-                    }} 
-                    disabled={timers.length === 0}
-                >
-                    Save Configuration
-                </Button>
-            </ButtonGroup>
-
-            <Notification id="save-notification">
-                Configuration saved to URL! You can now share this URL.
-            </Notification>
         </Container>
     );
 };

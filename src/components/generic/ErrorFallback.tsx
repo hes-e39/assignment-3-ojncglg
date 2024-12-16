@@ -1,6 +1,10 @@
+// This component serves as a fallback UI for error boundaries in the application.
+// It displays an error message and provides a button to reset the error state.
+
 import type { FallbackProps } from 'react-error-boundary';
 import styled from 'styled-components';
 
+// Styled container for the error message
 const ErrorContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -13,6 +17,7 @@ const ErrorContainer = styled.div`
   border: 2px solid #ff0000;
 `;
 
+// Styled title for the error message
 const ErrorTitle = styled.h2`
   color: #ff0000;
   font-size: 1.5rem;
@@ -20,6 +25,7 @@ const ErrorTitle = styled.h2`
   font-family: "Digital-7", "Roboto Mono", monospace;
 `;
 
+// Styled message for the error details
 const ErrorMessage = styled.pre`
   color: #ffd700;
   margin-bottom: 1rem;
@@ -27,6 +33,7 @@ const ErrorMessage = styled.pre`
   text-align: center;
 `;
 
+// Styled button to reset the error boundary
 const ResetButton = styled.button`
   background-color: #333;
   color: #ffd700;
@@ -43,6 +50,7 @@ const ResetButton = styled.button`
   }
 `;
 
+// ErrorFallback component that receives error and resetErrorBoundary props
 export const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   return (
     <ErrorContainer>

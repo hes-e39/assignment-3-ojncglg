@@ -1,3 +1,6 @@
+// This component implements the stopwatch functionality.
+// It displays the current duration and allows the user to see the time until the maximum duration is reached.
+
 import { useTimerContext } from '../../TimerContext';
 import { formatTime } from '../../utils/timeUtils';
 import { TIMER_CONFIG } from '../../timerConfig';
@@ -5,19 +8,21 @@ import { Container, Label, InfoBox } from '../SharedStyles';
 import TimerDisplay from './TimerDisplay';
 import type { BaseTimerProps } from './types';
 
-type StopwatchProps = BaseTimerProps;
+type StopwatchProps = BaseTimerProps; // Type definition for Stopwatch props
 
 export default function Stopwatch({ 
     duration, 
-    maxDuration = TIMER_CONFIG.STOPWATCH_MAX_TIME, 
+    maxDuration = TIMER_CONFIG.STOPWATCH_MAX_TIME, // Default max duration from config
     status, 
-    isActive = false, 
+    isActive = false, // Indicates if the stopwatch is currently active
     onDelete 
 }: StopwatchProps) {
-    const { fastForward } = useTimerContext();
+    const { fastForward } = useTimerContext(); // Get fastForward function from TimerContext
 
+    // Check if the maximum time has been reached
     const isMaxTimeReached = duration >= TIMER_CONFIG.STOPWATCH_MAX_TIME;
 
+    // If the maximum time is reached and the stopwatch is running, fast forward
     if (isMaxTimeReached && status === 'running') {
         fastForward();
     }
