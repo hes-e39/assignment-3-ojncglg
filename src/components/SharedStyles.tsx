@@ -38,9 +38,10 @@ export const TimeRemaining = styled.div`
 export const ButtonContainer = styled.div`
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  gap: 20px;
   margin-top: auto;
-  padding-top: 10px;
+  padding: 20px 0;
 `;
 
 export const TimerHeader = styled.div`
@@ -173,4 +174,12 @@ export const StatusIndicator = styled.div<{ status: string }>`
   border: 1px solid currentColor;
   font-weight: bold;
   letter-spacing: 0.5px;
+`;
+
+export const CompleteButton = styled(DeleteButton)`
+  background-color: #4CAF50;
+
+  &:hover, &:focus {
+    background-color: #388E3C;
+  }
 `;

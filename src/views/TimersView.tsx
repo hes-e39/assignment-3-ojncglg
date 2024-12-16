@@ -5,6 +5,7 @@ import { formatTime } from '../utils/timeUtils';
 import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from '../components/generic/ErrorFallback';
+import TimerDisplay from '../components/timers/TimerDisplay';
 
 // ------------------- Styled Components -------------------
 
@@ -78,52 +79,6 @@ const EditActionButton = styled.button<{ $variant?: 'save' | 'cancel' }>`
   &:hover {
     opacity: 0.8;
   }
-`;
-
-const TimerDetailsContainer = styled.div`
-  font-size: 2.5rem;
-  font-family: 'Digital-7', monospace;
-  text-align: center;
-  color: #ffd700;
-  margin: 10px 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-`;
-
-const TimerInfo = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-`;
-
-const TimerTitle = styled.h3`
-  font-family: 'Roboto', sans-serif;
-  color: #ffd700;
-  margin: 0;
-`;
-
-const TimerStatus = styled.span<{ status: Timer['status'] }>`
-  font-family: 'Roboto', sans-serif;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  background-color: ${({ status }) => {
-      switch (status) {
-          case 'running':
-              return '#2ecc40';
-          case 'paused':
-              return '#ff851b';
-          case 'completed':
-              return '#ff4136';
-          default:
-              return '#666';
-      }
-  }};
-  color: white;
 `;
 
 const ButtonGroup = styled.div`
@@ -259,75 +214,11 @@ const TotalTime = styled.div`
   }
 `;
 
-// ------------------- Helper Functions -------------------
-
-const getTimerDescription = (timer: Timer): string => {
-    switch (timer.type) {
-        case 'stopwatch':
-            return `Count up to ${formatTime(timer.maxDuration)}`;
-        case 'countdown':
-            return `Count down from ${formatTime(timer.initialDuration)}`;
-        case 'XY':
-            return `${timer.rounds} rounds of ${formatTime(timer.workTime)} work`;
-        case 'tabata':
-            return `${timer.rounds} rounds of ${formatTime(timer.workTime)} work / ${formatTime(timer.restTime)} rest`;
-        default:
-            return '';
-    }
-};
-
 // ------------------- TimersView Component -------------------
 
 const TimersContent = () => {
     const { timers, currentTimerIndex, toggleStartPause, fastForward, resetTimers, removeTimer, getTotalTime, getRemainingTime, saveToUrl, updateTimer, moveTimer } = useTimerContext();
     const [editingTimer, setEditingTimer] = useState<string | null>(null);
-
-    const renderTimerDetails = (timer: Timer, isActive: boolean) => {
-        if (!isActive) {
-            return <div>{getTimerDescription(timer)}</div>;
-        }
-
-        const details = [];
-        if (timer.description) {
-            details.push(<div key="desc" style={{ color: '#4CAF50', marginBottom: '10px' }}>{timer.description}</div>);
-        }
-
-        switch (timer.type) {
-            case 'stopwatch':
-                details.push(<div key="time">Time: {formatTime(Math.min(timer.duration, timer.maxDuration))}</div>);
-                return <>{details}</>;
-
-            case 'countdown':
-                details.push(<div key="remaining">Remaining: {formatTime(timer.duration)}</div>);
-                return <>{details}</>;
-
-            case 'XY':
-                details.push(
-                    <div key="xy">
-                        <div>
-                            Round: {timer.currentRound}/{timer.rounds}
-                        </div>
-                        <div>
-                            {timer.isWorking ? 'Work' : 'Rest'}: {formatTime(timer.duration)}
-                        </div>
-                    </div>
-                );
-                return <>{details}</>;
-
-            case 'tabata':
-                details.push(
-                    <div key="tabata">
-                        <div>
-                            Round: {timer.currentRound}/{timer.rounds}
-                        </div>
-                        <div>
-                            {timer.isWorking ? 'Work' : 'Rest'}: {formatTime(timer.duration)}
-                        </div>
-                    </div>
-                );
-                return <>{details}</>;
-        }
-    };
 
     return (
         <Container>
@@ -347,19 +238,15 @@ const TimersContent = () => {
             <TimersList>
                 {timers.map((timer, index) => (
                     <TimerCard key={timer.id} status={timer.status} isEditing={editingTimer === timer.id}>
-                        <RemoveButton 
-                            onClick={() => removeTimer(timer.id)} 
-                            disabled={timer.status === 'running' || editingTimer === timer.id}
-                        >
-                            Delete
-                        </RemoveButton>
-
-                        <TimerInfo>
-                            <TimerTitle>{timer.type.toUpperCase()}</TimerTitle>
-                            <TimerStatus status={timer.status}>{timer.status.toUpperCase()}</TimerStatus>
-                        </TimerInfo>
-
-                        <TimerDetailsContainer>{renderTimerDetails(timer, index === currentTimerIndex)}</TimerDetailsContainer>
+                        <TimerDisplay
+                            duration={timer.duration}
+                            maxDuration={timer.type === 'stopwatch' ? timer.maxDuration : 
+                                      timer.type === 'countdown' ? timer.initialDuration : undefined}
+                            status={timer.status}
+                            onDelete={() => removeTimer(timer.id)}
+                            onComplete={fastForward}
+                            timerType={timer.type.toUpperCase()}
+                        />
                         
                         {editingTimer === timer.id && (
                             <EditForm onSubmit={(e) => {

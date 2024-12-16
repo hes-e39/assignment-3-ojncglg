@@ -18,11 +18,6 @@ export default function Countdown({ duration, initialDuration, status, isActive 
         fastForward();
     }
 
-    const renderProgressBar = () => {
-        if (!isActive) return null;
-        return <ProgressBar percent={progressPercent} label={`${Math.max(0, progressPercent)}% Remaining`} />;
-    };
-
     const renderTimeInfo = () => {
         if (!isActive) return null;
         return <InfoBox>{duration > 0 ? <span>Initial Time: {formatTime(initialDuration)}</span> : <span>Time's up!</span>}</InfoBox>;
@@ -31,8 +26,8 @@ export default function Countdown({ duration, initialDuration, status, isActive 
     return (
         <Container role="timer" aria-label="Countdown Timer">
             <Label>COUNTDOWN</Label>
-            <TimerDisplay duration={duration} maxDuration={initialDuration} status={status} />
-            {renderProgressBar()}
+            <TimerDisplay duration={duration} maxDuration={initialDuration} status={status} timerType="COUNTDOWN" />
+            {isActive && <ProgressBar percent={progressPercent} label={`${Math.max(0, progressPercent)}% Remaining`} />}
             {renderTimeInfo()}
         </Container>
     );

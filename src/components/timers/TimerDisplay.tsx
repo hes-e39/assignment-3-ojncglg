@@ -7,6 +7,7 @@ import {
     TimerHeader,
     TimerType,
     DeleteButton,
+    CompleteButton,
     StatusIndicator
 } from '../SharedStyles';
 import { ProgressBar } from './SharedTimerComponents';
@@ -17,13 +18,25 @@ interface TimerDisplayProps {
     maxDuration?: number;
     status: TimerStatus;
     onDelete?: () => void;
+    onComplete?: () => void;
     timerType?: string;
 }
 
-const TimerDisplay: React.FC<TimerDisplayProps> = ({ duration, maxDuration, status, onDelete, timerType = "STOPWATCH" }) => {
+const TimerDisplay: React.FC<TimerDisplayProps> = ({ 
+    duration, 
+    maxDuration, 
+    status, 
+    onDelete, 
+    onComplete,
+    timerType = "STOPWATCH" 
+}) => {
     const displayStatus = status === 'not running' ? 'ready' : status;
 
-    const progressPercent = maxDuration ? Math.floor((duration / maxDuration) * 100) : 0;
+    const progressPercent = maxDuration ? 
+        (timerType === "COUNTDOWN" ? 
+            Math.floor(((maxDuration - duration) / maxDuration) * 100) : 
+            Math.floor((duration / maxDuration) * 100)
+        ) : 0;
 
     return (
         <TimeDisplayContainer status={displayStatus}>
@@ -45,7 +58,12 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({ duration, maxDuration, stat
                 </TimeRemaining>
             )}
             <ButtonContainer>
-                {status !== 'running' && (
+                {(status === 'paused' || (duration <= 0 && status !== 'completed')) && (
+                    <CompleteButton onClick={onComplete} aria-label="Complete timer">
+                        Complete
+                    </CompleteButton>
+                )}
+                {(status === 'paused' || duration <= 0) && (
                     <DeleteButton onClick={onDelete} aria-label="Delete timer">
                         Delete
                     </DeleteButton>
