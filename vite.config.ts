@@ -7,10 +7,10 @@ export default defineConfig({
     __DEFINES__: '{}'
   },
   server: {
-    port: 4173
+    port: 5173
   },
   base: '/assignment-3-ojncglg/',
   preview: {
-    port: 4173
+    port: 5173
   }
 })
