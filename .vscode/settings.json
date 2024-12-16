@@ -1,19 +1,13 @@
+// This file contains Visual Studio Code settings for the project.
+// It configures validation for various stylesheet formats.
+
 {
-	// Disable the default formatter, use biome instead
-	"prettier.enable": false,
-	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "biomejs.biome",
-	// Auto fix
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit",
-		"source.fixAll.biome": "explicit",
-		"quickfix.biome": "explicit"
-	},
-    "editor.indentSize": 4,
-    "[typescript]": {
-        "editor.defaultFormatter": "biomejs.biome"
-    },
-	"[typescriptreact]": {
-        "editor.defaultFormatter": "biomejs.biome"
-    }
+  // Disable CSS validation to avoid errors for Tailwind CSS classes
+  "css.validate": false,
+  // Disable LESS validation
+  "less.validate": false,
+  // Disable SCSS validation
+  "scss.validate": false,
+  // Disable PostCSS validation
+  "postcss.validate": false
 }
